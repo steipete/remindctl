@@ -204,11 +204,22 @@ public actor RemindersStore {
   }
 
   private func fetchReminders(in calendars: [EKCalendar]) async -> [ReminderItem] {
-    await withCheckedContinuation { continuation in
+    let cal = self.calendar
+    return await withCheckedContinuation { continuation in
       let predicate = eventStore.predicateForReminders(in: calendars)
       eventStore.fetchReminders(matching: predicate) { reminders in
         let mapped = (reminders ?? []).map { reminder in
-          self.item(from: reminder)
+          ReminderItem(
+            id: reminder.calendarItemIdentifier,
+            title: reminder.title ?? "",
+            notes: reminder.notes,
+            isCompleted: reminder.isCompleted,
+            completionDate: reminder.completionDate,
+            priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
+            dueDate: reminder.dueDateComponents.flatMap { cal.date(from: $0) },
+            listID: reminder.calendar.calendarIdentifier,
+            listName: reminder.calendar.title
+          )
         }
         continuation.resume(returning: mapped)
       }
