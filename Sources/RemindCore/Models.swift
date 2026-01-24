@@ -33,6 +33,64 @@ public enum ReminderPriority: String, Codable, CaseIterable, Sendable {
   }
 }
 
+public enum ReminderRecurrenceFrequency: String, Codable, CaseIterable, Sendable {
+  case daily
+  case weekly
+}
+
+public enum ReminderWeekday: String, Codable, CaseIterable, Sendable {
+  case monday = "mon"
+  case tuesday = "tue"
+  case wednesday = "wed"
+  case thursday = "thu"
+  case friday = "fri"
+  case saturday = "sat"
+  case sunday = "sun"
+
+  public var displayOrder: Int {
+    switch self {
+    case .monday:
+      return 1
+    case .tuesday:
+      return 2
+    case .wednesday:
+      return 3
+    case .thursday:
+      return 4
+    case .friday:
+      return 5
+    case .saturday:
+      return 6
+    case .sunday:
+      return 7
+    }
+  }
+}
+
+public enum ReminderRecurrenceEnd: Codable, Sendable, Equatable {
+  case count(Int)
+  case until(Date)
+}
+
+public struct ReminderRecurrence: Codable, Sendable, Equatable {
+  public let frequency: ReminderRecurrenceFrequency
+  public let interval: Int
+  public let daysOfWeek: [ReminderWeekday]?
+  public let end: ReminderRecurrenceEnd?
+
+  public init(
+    frequency: ReminderRecurrenceFrequency,
+    interval: Int = 1,
+    daysOfWeek: [ReminderWeekday]? = nil,
+    end: ReminderRecurrenceEnd? = nil
+  ) {
+    self.frequency = frequency
+    self.interval = interval
+    self.daysOfWeek = daysOfWeek
+    self.end = end
+  }
+}
+
 public struct ReminderList: Identifiable, Codable, Sendable, Equatable {
   public let id: String
   public let title: String
@@ -51,6 +109,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let completionDate: Date?
   public let priority: ReminderPriority
   public let dueDate: Date?
+  public let recurrence: ReminderRecurrence?
   public let listID: String
   public let listName: String
 
@@ -62,6 +121,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     completionDate: Date?,
     priority: ReminderPriority,
     dueDate: Date?,
+    recurrence: ReminderRecurrence? = nil,
     listID: String,
     listName: String
   ) {
@@ -72,6 +132,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.completionDate = completionDate
     self.priority = priority
     self.dueDate = dueDate
+    self.recurrence = recurrence
     self.listID = listID
     self.listName = listName
   }
@@ -82,12 +143,20 @@ public struct ReminderDraft: Sendable {
   public let notes: String?
   public let dueDate: Date?
   public let priority: ReminderPriority
+  public let recurrence: ReminderRecurrence?
 
-  public init(title: String, notes: String?, dueDate: Date?, priority: ReminderPriority) {
+  public init(
+    title: String,
+    notes: String?,
+    dueDate: Date?,
+    priority: ReminderPriority,
+    recurrence: ReminderRecurrence? = nil
+  ) {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
     self.priority = priority
+    self.recurrence = recurrence
   }
 }
 
@@ -96,6 +165,7 @@ public struct ReminderUpdate: Sendable {
   public let notes: String?
   public let dueDate: Date??
   public let priority: ReminderPriority?
+  public let recurrence: ReminderRecurrence??
   public let listName: String?
   public let isCompleted: Bool?
 
@@ -104,6 +174,7 @@ public struct ReminderUpdate: Sendable {
     notes: String? = nil,
     dueDate: Date?? = nil,
     priority: ReminderPriority? = nil,
+    recurrence: ReminderRecurrence?? = nil,
     listName: String? = nil,
     isCompleted: Bool? = nil
   ) {
@@ -111,6 +182,7 @@ public struct ReminderUpdate: Sendable {
     self.notes = notes
     self.dueDate = dueDate
     self.priority = priority
+    self.recurrence = recurrence
     self.listName = listName
     self.isCompleted = isCompleted
   }
