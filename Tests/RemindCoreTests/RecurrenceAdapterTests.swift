@@ -47,4 +47,20 @@ struct RecurrenceAdapterTests {
     let roundTrip = RecurrenceAdapter.recurrence(from: rule)
     #expect(roundTrip == recurrence)
   }
+
+  @Test("Monthly recurrence maps days of month")
+  func monthlyDays() {
+    let recurrence = ReminderRecurrence(
+      frequency: .monthly,
+      interval: 1,
+      daysOfMonth: [1, 15, 31]
+    )
+    let rule = RecurrenceAdapter.rule(from: recurrence)
+    let days = rule.daysOfTheMonth?.map { $0.intValue }
+
+    #expect(days == [1, 15, 31])
+
+    let roundTrip = RecurrenceAdapter.recurrence(from: rule)
+    #expect(roundTrip == recurrence)
+  }
 }

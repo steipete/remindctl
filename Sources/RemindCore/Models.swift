@@ -36,6 +36,7 @@ public enum ReminderPriority: String, Codable, CaseIterable, Sendable {
 public enum ReminderRecurrenceFrequency: String, Codable, CaseIterable, Sendable {
   case daily
   case weekly
+  case monthly
 }
 
 public enum ReminderWeekday: String, Codable, CaseIterable, Sendable {
@@ -76,17 +77,20 @@ public struct ReminderRecurrence: Codable, Sendable, Equatable {
   public let frequency: ReminderRecurrenceFrequency
   public let interval: Int
   public let daysOfWeek: [ReminderWeekday]?
+  public let daysOfMonth: [Int]?
   public let end: ReminderRecurrenceEnd?
 
   public init(
     frequency: ReminderRecurrenceFrequency,
     interval: Int = 1,
     daysOfWeek: [ReminderWeekday]? = nil,
+    daysOfMonth: [Int]? = nil,
     end: ReminderRecurrenceEnd? = nil
   ) {
     self.frequency = frequency
     self.interval = interval
     self.daysOfWeek = daysOfWeek
+    self.daysOfMonth = daysOfMonth
     self.end = end
   }
 }

@@ -18,9 +18,10 @@ enum AddCommand {
             .make(label: "list", names: [.short("l"), .long("list")], help: "List name", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Due date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Notes", parsing: .singleValue),
-            .make(label: "repeat", names: [.long("repeat")], help: "daily|weekly", parsing: .singleValue),
+            .make(label: "repeat", names: [.long("repeat")], help: "daily|weekly|monthly", parsing: .singleValue),
             .make(label: "interval", names: [.long("interval")], help: "Repeat interval", parsing: .singleValue),
             .make(label: "on", names: [.long("on")], help: "Weekdays (mon,tue,...)", parsing: .singleValue),
+            .make(label: "monthDay", names: [.long("month-day")], help: "Days of month (1-31)", parsing: .singleValue),
             .make(label: "count", names: [.long("count")], help: "Repeat occurrence count", parsing: .singleValue),
             .make(label: "until", names: [.long("until")], help: "Repeat end date", parsing: .singleValue),
             .make(
@@ -63,22 +64,28 @@ enum AddCommand {
       let repeatValue = values.option("repeat")
       let intervalValue = values.option("interval")
       let onValue = values.option("on")
+      let monthDayValue = values.option("monthDay")
       let countValue = values.option("count")
       let untilValue = values.option("until")
       let priorityValue = values.option("priority")
 
-      if repeatValue == nil && (intervalValue != nil || onValue != nil || countValue != nil || untilValue != nil) {
-        throw RemindCoreError.operationFailed("Use --repeat with --interval, --on, --count, or --until")
+      let hasRepeatModifiers = [intervalValue, onValue, monthDayValue, countValue, untilValue]
+        .contains { $0 != nil }
+      if repeatValue == nil && hasRepeatModifiers {
+        throw RemindCoreError.operationFailed("Use --repeat with --interval, --on, --month-day, --count, or --until")
       }
 
       var dueDate = try dueValue.map(CommandHelpers.parseDueDate)
       let recurrence = try repeatValue.map {
         try RepeatParsing.parseRecurrence(
-          frequency: $0,
-          interval: intervalValue,
-          count: countValue,
-          until: untilValue,
-          on: onValue
+          .init(
+            frequency: $0,
+            interval: intervalValue,
+            count: countValue,
+            until: untilValue,
+            on: onValue,
+            monthDay: monthDayValue
+          )
         )
       }
 

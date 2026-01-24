@@ -2,14 +2,25 @@ import Foundation
 import RemindCore
 
 enum RepeatParsing {
+  struct RepeatInput {
+    let frequency: String
+    let interval: String?
+    let count: String?
+    let until: String?
+    let on: String?
+    let monthDay: String?
+  }
+
   static func parseFrequency(_ value: String) throws -> ReminderRecurrenceFrequency {
     switch value.lowercased() {
     case "daily":
       return .daily
     case "weekly":
       return .weekly
+    case "monthly":
+      return .monthly
     default:
-      throw RemindCoreError.operationFailed("Invalid repeat frequency: \"\(value)\" (use daily|weekly)")
+      throw RemindCoreError.operationFailed("Invalid repeat frequency: \"\(value)\" (use daily|weekly|monthly)")
     }
   }
 
@@ -27,28 +38,26 @@ enum RepeatParsing {
     return count
   }
 
-  static func parseRecurrence(
-    frequency: String,
-    interval: String?,
-    count: String?,
-    until: String?,
-    on: String?
-  ) throws -> ReminderRecurrence {
-    if count != nil && until != nil {
+  static func parseRecurrence(_ input: RepeatInput) throws -> ReminderRecurrence {
+    if input.count != nil && input.until != nil {
       throw RemindCoreError.operationFailed("Use either --count or --until, not both")
     }
 
-    let parsedFrequency = try parseFrequency(frequency)
-    let parsedInterval = try interval.map(parseInterval) ?? 1
-    let daysOfWeek = try on.map { try parseWeekdays($0) }
+    let parsedFrequency = try parseFrequency(input.frequency)
+    let parsedInterval = try input.interval.map(parseInterval) ?? 1
+    let daysOfWeek = try input.on.map { try parseWeekdays($0) }
+    let daysOfMonth = try input.monthDay.map { try parseMonthDays($0) }
     if daysOfWeek != nil && parsedFrequency != .weekly {
       throw RemindCoreError.operationFailed("--on is only supported with weekly repeats")
     }
+    if daysOfMonth != nil && parsedFrequency != .monthly {
+      throw RemindCoreError.operationFailed("--month-day is only supported with monthly repeats")
+    }
 
     let end: ReminderRecurrenceEnd?
-    if let count {
+    if let count = input.count {
       end = .count(try parseCount(count))
-    } else if let until {
+    } else if let until = input.until {
       guard let parsedUntil = DateParsing.parseUserDate(until) else {
         throw RemindCoreError.invalidDate(until)
       }
@@ -61,6 +70,7 @@ enum RepeatParsing {
       frequency: parsedFrequency,
       interval: parsedInterval,
       daysOfWeek: daysOfWeek,
+      daysOfMonth: daysOfMonth,
       end: end
     )
   }
@@ -82,6 +92,25 @@ enum RepeatParsing {
       }
     }
     return weekdays
+  }
+
+  private static func parseMonthDays(_ value: String) throws -> [Int] {
+    let tokens = value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    guard !tokens.isEmpty else {
+      throw RemindCoreError.operationFailed("Invalid month days: \"\(value)\"")
+    }
+
+    var days: [Int] = []
+    var seen = Set<Int>()
+    for token in tokens where !token.isEmpty {
+      guard let day = Int(token), (1...31).contains(day) else {
+        throw RemindCoreError.operationFailed("Invalid month day: \"\(token)\"")
+      }
+      if seen.insert(day).inserted {
+        days.append(day)
+      }
+    }
+    return days
   }
 
   private static func parseWeekday(_ value: String) -> ReminderWeekday? {
