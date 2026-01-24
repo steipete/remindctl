@@ -9,6 +9,7 @@ enum RepeatParsing {
     let until: String?
     let on: String?
     let monthDay: String?
+    let setpos: String?
   }
 
   static func parseFrequency(_ value: String) throws -> ReminderRecurrenceFrequency {
@@ -47,11 +48,27 @@ enum RepeatParsing {
     let parsedInterval = try input.interval.map(parseInterval) ?? 1
     let daysOfWeek = try input.on.map { try parseWeekdays($0) }
     let daysOfMonth = try input.monthDay.map { try parseMonthDays($0) }
-    if daysOfWeek != nil && parsedFrequency != .weekly {
-      throw RemindCoreError.operationFailed("--on is only supported with weekly repeats")
+    let setPositions = try input.setpos.map { try parseSetPositions($0) }
+    if daysOfWeek != nil {
+      switch parsedFrequency {
+      case .weekly:
+        break
+      case .monthly:
+        if setPositions == nil {
+          throw RemindCoreError.operationFailed("--on requires --setpos for monthly repeats")
+        }
+      default:
+        throw RemindCoreError.operationFailed("--on is only supported with weekly repeats")
+      }
     }
     if daysOfMonth != nil && parsedFrequency != .monthly {
       throw RemindCoreError.operationFailed("--month-day is only supported with monthly repeats")
+    }
+    if setPositions != nil && parsedFrequency != .monthly {
+      throw RemindCoreError.operationFailed("--setpos is only supported with monthly repeats")
+    }
+    if setPositions != nil && daysOfWeek == nil {
+      throw RemindCoreError.operationFailed("--setpos requires --on")
     }
 
     let end: ReminderRecurrenceEnd?
@@ -71,6 +88,7 @@ enum RepeatParsing {
       interval: parsedInterval,
       daysOfWeek: daysOfWeek,
       daysOfMonth: daysOfMonth,
+      setPositions: setPositions,
       end: end
     )
   }
@@ -132,5 +150,28 @@ enum RepeatParsing {
     default:
       return nil
     }
+  }
+
+  private static func parseSetPositions(_ value: String) throws -> [Int] {
+    let tokens = value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    guard !tokens.isEmpty else {
+      throw RemindCoreError.operationFailed("Invalid set positions: \"\(value)\"")
+    }
+
+    var positions: [Int] = []
+    var seen = Set<Int>()
+    for token in tokens where !token.isEmpty {
+      guard let position = Int(token), isValidSetPosition(position) else {
+        throw RemindCoreError.operationFailed("Invalid set position: \"\(token)\"")
+      }
+      if seen.insert(position).inserted {
+        positions.append(position)
+      }
+    }
+    return positions
+  }
+
+  private static func isValidSetPosition(_ value: Int) -> Bool {
+    value == -1 || (1...4).contains(value)
   }
 }

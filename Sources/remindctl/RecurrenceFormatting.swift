@@ -19,6 +19,11 @@ enum RecurrenceFormatting {
       parts.append("month-day=\(days)")
     }
 
+    if let setPositions = recurrence.setPositions, !setPositions.isEmpty {
+      let positions = setPositions.map(String.init).joined(separator: ",")
+      parts.append("setpos=\(positions)")
+    }
+
     if let end = recurrence.end {
       switch end {
       case .count(let count):

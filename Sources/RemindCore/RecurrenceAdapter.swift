@@ -10,6 +10,7 @@ enum RecurrenceAdapter {
       .sorted { $0.displayOrder < $1.displayOrder }
       .compactMap(eventKitDayOfWeek(from:))
     let daysOfMonth = recurrence.daysOfMonth?.sorted().map { NSNumber(value: $0) }
+    let setPositions = recurrence.setPositions?.sorted().map { NSNumber(value: $0) }
     return EKRecurrenceRule(
       recurrenceWith: frequency,
       interval: interval,
@@ -18,7 +19,7 @@ enum RecurrenceAdapter {
       monthsOfTheYear: nil,
       weeksOfTheYear: nil,
       daysOfTheYear: nil,
-      setPositions: nil,
+      setPositions: setPositions,
       end: end
     )
   }
@@ -33,11 +34,13 @@ enum RecurrenceAdapter {
       .compactMap(reminderDayOfWeek(from:))
       .sorted { $0.displayOrder < $1.displayOrder }
     let daysOfMonth = rule.daysOfTheMonth?.map { $0.intValue }.sorted()
+    let setPositions = rule.setPositions?.map { $0.intValue }.sorted()
     return ReminderRecurrence(
       frequency: frequency,
       interval: interval,
       daysOfWeek: daysOfWeek,
       daysOfMonth: daysOfMonth,
+      setPositions: setPositions,
       end: end
     )
   }

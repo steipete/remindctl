@@ -42,6 +42,18 @@ struct RecurrenceFormattingTests {
     #expect(summary == "repeat=monthly month-day=1,15,31")
   }
 
+  @Test("Formats monthly recurrence with set positions")
+  func monthlySetposSummary() {
+    let recurrence = ReminderRecurrence(
+      frequency: .monthly,
+      interval: 1,
+      daysOfWeek: [.monday],
+      setPositions: [2]
+    )
+    let summary = RecurrenceFormatting.summary(for: recurrence, useISO: false)
+    #expect(summary == "repeat=monthly on=mon setpos=2")
+  }
+
   @Test("Formats ISO until date for plain output")
   func untilSummaryISO() {
     let date = Date(timeIntervalSince1970: 0)

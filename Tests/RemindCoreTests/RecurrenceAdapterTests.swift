@@ -63,4 +63,23 @@ struct RecurrenceAdapterTests {
     let roundTrip = RecurrenceAdapter.recurrence(from: rule)
     #expect(roundTrip == recurrence)
   }
+
+  @Test("Monthly recurrence maps set positions with weekdays")
+  func monthlySetPositions() {
+    let recurrence = ReminderRecurrence(
+      frequency: .monthly,
+      interval: 1,
+      daysOfWeek: [.monday],
+      setPositions: [2]
+    )
+    let rule = RecurrenceAdapter.rule(from: recurrence)
+    let positions = rule.setPositions?.map { $0.intValue }
+    let days = rule.daysOfTheWeek?.map(\.dayOfTheWeek)
+
+    #expect(positions == [2])
+    #expect(days == [.monday])
+
+    let roundTrip = RecurrenceAdapter.recurrence(from: rule)
+    #expect(roundTrip == recurrence)
+  }
 }

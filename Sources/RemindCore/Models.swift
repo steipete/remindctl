@@ -78,6 +78,7 @@ public struct ReminderRecurrence: Codable, Sendable, Equatable {
   public let interval: Int
   public let daysOfWeek: [ReminderWeekday]?
   public let daysOfMonth: [Int]?
+  public let setPositions: [Int]?
   public let end: ReminderRecurrenceEnd?
 
   public init(
@@ -85,12 +86,14 @@ public struct ReminderRecurrence: Codable, Sendable, Equatable {
     interval: Int = 1,
     daysOfWeek: [ReminderWeekday]? = nil,
     daysOfMonth: [Int]? = nil,
+    setPositions: [Int]? = nil,
     end: ReminderRecurrenceEnd? = nil
   ) {
     self.frequency = frequency
     self.interval = interval
     self.daysOfWeek = daysOfWeek
     self.daysOfMonth = daysOfMonth
+    self.setPositions = setPositions
     self.end = end
   }
 }
