@@ -18,6 +18,10 @@ enum AddCommand {
             .make(label: "list", names: [.short("l"), .long("list")], help: "List name", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Due date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Notes", parsing: .singleValue),
+            .make(label: "repeat", names: [.long("repeat")], help: "daily|weekly", parsing: .singleValue),
+            .make(label: "interval", names: [.long("interval")], help: "Repeat interval", parsing: .singleValue),
+            .make(label: "count", names: [.long("count")], help: "Repeat occurrence count", parsing: .singleValue),
+            .make(label: "until", names: [.long("until")], help: "Repeat end date", parsing: .singleValue),
             .make(
               label: "priority",
               names: [.short("p"), .long("priority")],
@@ -55,9 +59,29 @@ enum AddCommand {
       let listName = values.option("list")
       let notes = values.option("notes")
       let dueValue = values.option("due")
+      let repeatValue = values.option("repeat")
+      let intervalValue = values.option("interval")
+      let countValue = values.option("count")
+      let untilValue = values.option("until")
       let priorityValue = values.option("priority")
 
-      let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
+      if repeatValue == nil && (intervalValue != nil || countValue != nil || untilValue != nil) {
+        throw RemindCoreError.operationFailed("Use --repeat with --interval, --count, or --until")
+      }
+
+      var dueDate = try dueValue.map(CommandHelpers.parseDueDate)
+      let recurrence = try repeatValue.map {
+        try RepeatParsing.parseRecurrence(
+          frequency: $0,
+          interval: intervalValue,
+          count: countValue,
+          until: untilValue
+        )
+      }
+
+      if recurrence != nil && dueDate == nil {
+        dueDate = Date()
+      }
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
 
       let store = RemindersStore()
@@ -73,7 +97,13 @@ enum AddCommand {
         throw RemindCoreError.operationFailed("No default list found. Specify --list.")
       }
 
-      let draft = ReminderDraft(title: title, notes: notes, dueDate: dueDate, priority: priority)
+      let draft = ReminderDraft(
+        title: title,
+        notes: notes,
+        dueDate: dueDate,
+        priority: priority,
+        recurrence: recurrence
+      )
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }
