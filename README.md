@@ -54,6 +54,12 @@ remindctl complete 1 2 3
 remindctl delete 4A83 --force
 remindctl status                # permission status
 remindctl authorize             # request permissions
+
+remindctl add "Water plants" --repeat weekly --on sat
+remindctl add "Pay rent" --repeat monthly --month-day 1
+remindctl add "Sprint retro" --repeat monthly --on thu --setpos 2
+remindctl add "File taxes" --repeat yearly --month 4 --month-day 15
+remindctl edit 3 --repeat none
 ```
 
 ## Output formats

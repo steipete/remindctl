@@ -19,6 +19,40 @@ enum EditCommand {
             .make(label: "due", names: [.short("d"), .long("due")], help: "Set due date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
             .make(
+              label: "repeat",
+              names: [.long("repeat")],
+              help: "daily|weekly|monthly|yearly|none",
+              parsing: .singleValue
+            ),
+            .make(label: "interval", names: [.long("interval")], help: "Repeat interval", parsing: .singleValue),
+            .make(label: "on", names: [.long("on")], help: "Weekdays (mon,tue,...)", parsing: .singleValue),
+            .make(
+              label: "monthDay",
+              names: [.long("month-day")],
+              help: "Days of month (1-31)",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "setpos",
+              names: [.long("setpos")],
+              help: "Week of month (-1,1-4)",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "month",
+              names: [.long("month")],
+              help: "Months (1-12 or jan-dec)",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "week",
+              names: [.long("week")],
+              help: "Weeks of year (1-53)",
+              parsing: .singleValue
+            ),
+            .make(label: "count", names: [.long("count")], help: "Repeat occurrence count", parsing: .singleValue),
+            .make(label: "until", names: [.long("until")], help: "Repeat end date", parsing: .singleValue),
+            .make(
               label: "priority",
               names: [.short("p"), .long("priority")],
               help: "none|low|medium|high",
@@ -54,6 +88,15 @@ enum EditCommand {
       let title = values.option("title")
       let listName = values.option("list")
       let notes = values.option("notes")
+      let repeatValue = values.option("repeat")
+      let intervalValue = values.option("interval")
+      let onValue = values.option("on")
+      let monthDayValue = values.option("monthDay")
+      let setposValue = values.option("setpos")
+      let monthValue = values.option("month")
+      let weekValue = values.option("week")
+      let countValue = values.option("count")
+      let untilValue = values.option("until")
 
       var dueUpdate: Date??
       if let dueValue = values.option("due") {
@@ -71,6 +114,47 @@ enum EditCommand {
         priority = try CommandHelpers.parsePriority(priorityValue)
       }
 
+      let repeatInput = RepeatParsing.RepeatInput(
+        frequency: repeatValue ?? "",
+        interval: intervalValue,
+        count: countValue,
+        until: untilValue,
+        on: onValue,
+        monthDay: monthDayValue,
+        setpos: setposValue,
+        month: monthValue,
+        week: weekValue
+      )
+      if repeatValue == nil && repeatInput.hasModifiers {
+        throw RemindCoreError.operationFailed(
+          "Use --repeat with --interval, --on, --month-day, --setpos, --month, --week, --count, or --until"
+        )
+      }
+
+      let recurrenceUpdate: ReminderRecurrence?? = try {
+        guard let repeatValue else { return nil }
+        let input = RepeatParsing.RepeatInput(
+          frequency: repeatValue,
+          interval: intervalValue,
+          count: countValue,
+          until: untilValue,
+          on: onValue,
+          monthDay: monthDayValue,
+          setpos: setposValue,
+          month: monthValue,
+          week: weekValue
+        )
+        let parsed = try RepeatParsing.parseRecurrenceOption(
+          value: repeatValue,
+          input: input,
+          allowNone: true
+        )
+        if repeatValue.lowercased() == "none" {
+          return .some(nil)
+        }
+        return parsed
+      }()
+
       let completeFlag = values.flag("complete")
       let incompleteFlag = values.flag("incomplete")
       if completeFlag && incompleteFlag {
@@ -78,7 +162,20 @@ enum EditCommand {
       }
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
-      if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil && isCompleted == nil {
+      if recurrenceUpdate != nil && dueUpdate == nil && reminder.dueDate == nil {
+        dueUpdate = .some(Date())
+      }
+
+      let hasChanges =
+        title != nil
+        || listName != nil
+        || notes != nil
+        || dueUpdate != nil
+        || priority != nil
+        || recurrenceUpdate != nil
+        || isCompleted != nil
+
+      if !hasChanges {
         throw RemindCoreError.operationFailed("No changes specified")
       }
 
@@ -87,6 +184,7 @@ enum EditCommand {
         notes: notes,
         dueDate: dueUpdate,
         priority: priority,
+        recurrence: recurrenceUpdate,
         listName: listName,
         isCompleted: isCompleted
       )
