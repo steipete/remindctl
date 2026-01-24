@@ -100,36 +100,40 @@ enum AddCommand {
       let untilValue = values.option("until")
       let priorityValue = values.option("priority")
 
-      let hasRepeatModifiers = [
-        intervalValue,
-        onValue,
-        monthDayValue,
-        setposValue,
-        monthValue,
-        weekValue,
-        countValue,
-        untilValue,
-      ].contains { $0 != nil }
-      if repeatValue == nil && hasRepeatModifiers {
+      let repeatInput = RepeatParsing.RepeatInput(
+        frequency: repeatValue ?? "",
+        interval: intervalValue,
+        count: countValue,
+        until: untilValue,
+        on: onValue,
+        monthDay: monthDayValue,
+        setpos: setposValue,
+        month: monthValue,
+        week: weekValue
+      )
+      if repeatValue == nil && repeatInput.hasModifiers {
         throw RemindCoreError.operationFailed(
           "Use --repeat with --interval, --on, --month-day, --setpos, --month, --week, --count, or --until"
         )
       }
 
       var dueDate = try dueValue.map(CommandHelpers.parseDueDate)
-      let recurrence = try repeatValue.map {
-        try RepeatParsing.parseRecurrence(
-          .init(
-            frequency: $0,
-            interval: intervalValue,
-            count: countValue,
-            until: untilValue,
-            on: onValue,
-            monthDay: monthDayValue,
-            setpos: setposValue,
-            month: monthValue,
-            week: weekValue
-          )
+      let recurrence = try repeatValue.flatMap {
+        let input = RepeatParsing.RepeatInput(
+          frequency: $0,
+          interval: intervalValue,
+          count: countValue,
+          until: untilValue,
+          on: onValue,
+          monthDay: monthDayValue,
+          setpos: setposValue,
+          month: monthValue,
+          week: weekValue
+        )
+        return try RepeatParsing.parseRecurrenceOption(
+          value: $0,
+          input: input,
+          allowNone: false
         )
       }
 

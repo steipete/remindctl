@@ -12,6 +12,19 @@ enum RepeatParsing {
     let setpos: String?
     let month: String?
     let week: String?
+
+    var hasModifiers: Bool {
+      [
+        interval,
+        count,
+        until,
+        on,
+        monthDay,
+        setpos,
+        month,
+        week,
+      ].contains { $0 != nil }
+    }
   }
 
   static func parseFrequency(_ value: String) throws -> ReminderRecurrenceFrequency {
@@ -41,6 +54,23 @@ enum RepeatParsing {
       throw RemindCoreError.operationFailed("Invalid count: \"\(value)\" (use a positive integer)")
     }
     return count
+  }
+
+  static func parseRecurrenceOption(
+    value: String,
+    input: RepeatInput,
+    allowNone: Bool
+  ) throws -> ReminderRecurrence? {
+    if value.lowercased() == "none" {
+      if !allowNone {
+        throw RemindCoreError.operationFailed("--repeat none is only supported with edit")
+      }
+      if input.hasModifiers {
+        throw RemindCoreError.operationFailed("Use --repeat none without other repeat options")
+      }
+      return nil
+    }
+    return try parseRecurrence(input)
   }
 
   static func parseRecurrence(_ input: RepeatInput) throws -> ReminderRecurrence {
@@ -107,6 +137,9 @@ enum RepeatParsing {
     )
   }
 
+}
+
+extension RepeatParsing {
   private static func parseWeekdays(_ value: String) throws -> [ReminderWeekday] {
     let tokens = value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     guard !tokens.isEmpty else {

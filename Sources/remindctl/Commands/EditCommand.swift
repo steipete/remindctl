@@ -21,7 +21,7 @@ enum EditCommand {
             .make(
               label: "repeat",
               names: [.long("repeat")],
-              help: "daily|weekly|monthly|yearly",
+              help: "daily|weekly|monthly|yearly|none",
               parsing: .singleValue
             ),
             .make(label: "interval", names: [.long("interval")], help: "Repeat interval", parsing: .singleValue),
@@ -114,37 +114,46 @@ enum EditCommand {
         priority = try CommandHelpers.parsePriority(priorityValue)
       }
 
-      let hasRepeatModifiers = [
-        intervalValue,
-        onValue,
-        monthDayValue,
-        setposValue,
-        monthValue,
-        weekValue,
-        countValue,
-        untilValue,
-      ].contains { $0 != nil }
-      if repeatValue == nil && hasRepeatModifiers {
+      let repeatInput = RepeatParsing.RepeatInput(
+        frequency: repeatValue ?? "",
+        interval: intervalValue,
+        count: countValue,
+        until: untilValue,
+        on: onValue,
+        monthDay: monthDayValue,
+        setpos: setposValue,
+        month: monthValue,
+        week: weekValue
+      )
+      if repeatValue == nil && repeatInput.hasModifiers {
         throw RemindCoreError.operationFailed(
           "Use --repeat with --interval, --on, --month-day, --setpos, --month, --week, --count, or --until"
         )
       }
 
-      let recurrenceUpdate: ReminderRecurrence?? = try repeatValue.map {
-        try RepeatParsing.parseRecurrence(
-          .init(
-            frequency: $0,
-            interval: intervalValue,
-            count: countValue,
-            until: untilValue,
-            on: onValue,
-            monthDay: monthDayValue,
-            setpos: setposValue,
-            month: monthValue,
-            week: weekValue
-          )
+      let recurrenceUpdate: ReminderRecurrence?? = try {
+        guard let repeatValue else { return nil }
+        let input = RepeatParsing.RepeatInput(
+          frequency: repeatValue,
+          interval: intervalValue,
+          count: countValue,
+          until: untilValue,
+          on: onValue,
+          monthDay: monthDayValue,
+          setpos: setposValue,
+          month: monthValue,
+          week: weekValue
         )
-      }
+        let parsed = try RepeatParsing.parseRecurrenceOption(
+          value: repeatValue,
+          input: input,
+          allowNone: true
+        )
+        if repeatValue.lowercased() == "none" {
+          return .some(nil)
+        }
+        return parsed
+      }()
 
       let completeFlag = values.flag("complete")
       let incompleteFlag = values.flag("incomplete")

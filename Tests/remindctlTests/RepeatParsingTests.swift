@@ -314,3 +314,47 @@ struct RepeatParsingYearlyTests {
     }
   }
 }
+
+@MainActor
+struct RepeatParsingNoneTests {
+  @Test("Accepts --repeat none when allowed")
+  func repeatNone() throws {
+    let result = try RepeatParsing.parseRecurrenceOption(
+      value: "none",
+      input: .init(
+        frequency: "none",
+        interval: nil,
+        count: nil,
+        until: nil,
+        on: nil,
+        monthDay: nil,
+        setpos: nil,
+        month: nil,
+        week: nil
+      ),
+      allowNone: true
+    )
+    #expect(result == nil)
+  }
+
+  @Test("Rejects --repeat none with modifiers")
+  func repeatNoneWithModifiers() {
+    #expect(throws: RemindCoreError.self) {
+      _ = try RepeatParsing.parseRecurrenceOption(
+        value: "none",
+        input: .init(
+          frequency: "none",
+          interval: "2",
+          count: nil,
+          until: nil,
+          on: nil,
+          monthDay: nil,
+          setpos: nil,
+          month: nil,
+          week: nil
+        ),
+        allowNone: true
+      )
+    }
+  }
+}
