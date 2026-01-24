@@ -1,4 +1,5 @@
 import Testing
+
 @testable import RemindCore
 @testable import remindctl
 
@@ -14,7 +15,9 @@ struct RepeatParsingTests {
         until: nil,
         on: nil,
         monthDay: nil,
-        setpos: nil
+        setpos: nil,
+        month: nil,
+        week: nil
       )
     )
     #expect(recurrence.frequency == .daily)
@@ -32,7 +35,9 @@ struct RepeatParsingTests {
         until: nil,
         on: nil,
         monthDay: nil,
-        setpos: nil
+        setpos: nil,
+        month: nil,
+        week: nil
       )
     )
     #expect(recurrence.frequency == .weekly)
@@ -50,7 +55,9 @@ struct RepeatParsingTests {
         until: "2026-01-03T12:34:56Z",
         on: nil,
         monthDay: nil,
-        setpos: nil
+        setpos: nil,
+        month: nil,
+        week: nil
       )
     )
     guard case .until = recurrence.end else {
@@ -64,13 +71,15 @@ struct RepeatParsingTests {
     #expect(throws: RemindCoreError.self) {
       _ = try RepeatParsing.parseRecurrence(
         .init(
-          frequency: "yearly",
+          frequency: "hourly",
           interval: nil,
           count: nil,
           until: nil,
           on: nil,
           monthDay: nil,
-          setpos: nil
+          setpos: nil,
+          month: nil,
+          week: nil
         )
       )
     }
@@ -87,7 +96,9 @@ struct RepeatParsingTests {
           until: "tomorrow",
           on: nil,
           monthDay: nil,
-          setpos: nil
+          setpos: nil,
+          month: nil,
+          week: nil
         )
       )
     }
@@ -103,7 +114,9 @@ struct RepeatParsingTests {
         until: nil,
         on: "mon,wed,fri",
         monthDay: nil,
-        setpos: nil
+        setpos: nil,
+        month: nil,
+        week: nil
       )
     )
     #expect(recurrence.daysOfWeek == [.monday, .wednesday, .friday])
@@ -120,7 +133,9 @@ struct RepeatParsingTests {
           until: nil,
           on: "mon",
           monthDay: nil,
-          setpos: nil
+          setpos: nil,
+          month: nil,
+          week: nil
         )
       )
     }
@@ -137,7 +152,9 @@ struct RepeatParsingTests {
           until: nil,
           on: "mon",
           monthDay: nil,
-          setpos: nil
+          setpos: nil,
+          month: nil,
+          week: nil
         )
       )
     }
@@ -153,7 +170,9 @@ struct RepeatParsingTests {
         until: nil,
         on: nil,
         monthDay: "1,15,31",
-        setpos: nil
+        setpos: nil,
+        month: nil,
+        week: nil
       )
     )
     #expect(recurrence.daysOfMonth == [1, 15, 31])
@@ -170,7 +189,9 @@ struct RepeatParsingTests {
           until: nil,
           on: nil,
           monthDay: "1",
-          setpos: nil
+          setpos: nil,
+          month: nil,
+          week: nil
         )
       )
     }
@@ -186,7 +207,9 @@ struct RepeatParsingTests {
         until: nil,
         on: "mon",
         monthDay: nil,
-        setpos: "2"
+        setpos: "2",
+        month: nil,
+        week: nil
       )
     )
     #expect(recurrence.setPositions == [2])
@@ -203,7 +226,9 @@ struct RepeatParsingTests {
           until: nil,
           on: nil,
           monthDay: nil,
-          setpos: "2"
+          setpos: "2",
+          month: nil,
+          week: nil
         )
       )
     }
@@ -220,7 +245,70 @@ struct RepeatParsingTests {
           until: nil,
           on: "mon",
           monthDay: nil,
-          setpos: "2"
+          setpos: "2",
+          month: nil,
+          week: nil
+        )
+      )
+    }
+  }
+
+}
+
+@MainActor
+struct RepeatParsingYearlyTests {
+  @Test("Parses yearly months and weeks")
+  func yearlyMonthsWeeks() throws {
+    let recurrence = try RepeatParsing.parseRecurrence(
+      .init(
+        frequency: "yearly",
+        interval: nil,
+        count: nil,
+        until: nil,
+        on: nil,
+        monthDay: nil,
+        setpos: nil,
+        month: "jan,dec",
+        week: "1,52"
+      )
+    )
+    #expect(recurrence.monthsOfYear == [1, 12])
+    #expect(recurrence.weeksOfYear == [1, 52])
+  }
+
+  @Test("Rejects --month for non-yearly")
+  func monthNonYearly() {
+    #expect(throws: RemindCoreError.self) {
+      _ = try RepeatParsing.parseRecurrence(
+        .init(
+          frequency: "monthly",
+          interval: nil,
+          count: nil,
+          until: nil,
+          on: nil,
+          monthDay: nil,
+          setpos: nil,
+          month: "1",
+          week: nil
+        )
+      )
+    }
+  }
+
+  @Test("Rejects --week for non-yearly")
+  func weekNonYearly() {
+    #expect(throws: RemindCoreError.self) {
+      _ = try RepeatParsing.parseRecurrence(
+        .init(
+          frequency: "weekly",
+          interval: nil,
+          count: nil,
+          until: nil,
+          on: nil,
+          monthDay: nil,
+          setpos: nil,
+          month: nil,
+          week: "1"
         )
       )
     }

@@ -11,13 +11,15 @@ enum RecurrenceAdapter {
       .compactMap(eventKitDayOfWeek(from:))
     let daysOfMonth = recurrence.daysOfMonth?.sorted().map { NSNumber(value: $0) }
     let setPositions = recurrence.setPositions?.sorted().map { NSNumber(value: $0) }
+    let monthsOfYear = recurrence.monthsOfYear?.sorted().map { NSNumber(value: $0) }
+    let weeksOfYear = recurrence.weeksOfYear?.sorted().map { NSNumber(value: $0) }
     return EKRecurrenceRule(
       recurrenceWith: frequency,
       interval: interval,
       daysOfTheWeek: daysOfWeek,
       daysOfTheMonth: daysOfMonth,
-      monthsOfTheYear: nil,
-      weeksOfTheYear: nil,
+      monthsOfTheYear: monthsOfYear,
+      weeksOfTheYear: weeksOfYear,
       daysOfTheYear: nil,
       setPositions: setPositions,
       end: end
@@ -35,12 +37,16 @@ enum RecurrenceAdapter {
       .sorted { $0.displayOrder < $1.displayOrder }
     let daysOfMonth = rule.daysOfTheMonth?.map { $0.intValue }.sorted()
     let setPositions = rule.setPositions?.map { $0.intValue }.sorted()
+    let monthsOfYear = rule.monthsOfTheYear?.map { $0.intValue }.sorted()
+    let weeksOfYear = rule.weeksOfTheYear?.map { $0.intValue }.sorted()
     return ReminderRecurrence(
       frequency: frequency,
       interval: interval,
       daysOfWeek: daysOfWeek,
       daysOfMonth: daysOfMonth,
       setPositions: setPositions,
+      monthsOfYear: monthsOfYear,
+      weeksOfYear: weeksOfYear,
       end: end
     )
   }
@@ -53,6 +59,8 @@ enum RecurrenceAdapter {
       return .weekly
     case .monthly:
       return .monthly
+    case .yearly:
+      return .yearly
     }
   }
 
@@ -64,6 +72,8 @@ enum RecurrenceAdapter {
       return .weekly
     case .monthly:
       return .monthly
+    case .yearly:
+      return .yearly
     default:
       return nil
     }

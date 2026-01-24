@@ -54,6 +54,18 @@ struct RecurrenceFormattingTests {
     #expect(summary == "repeat=monthly on=mon setpos=2")
   }
 
+  @Test("Formats yearly recurrence with months and weeks")
+  func yearlySummary() {
+    let recurrence = ReminderRecurrence(
+      frequency: .yearly,
+      interval: 1,
+      monthsOfYear: [1, 12],
+      weeksOfYear: [1, 52]
+    )
+    let summary = RecurrenceFormatting.summary(for: recurrence, useISO: false)
+    #expect(summary == "repeat=yearly month=1,12 week=1,52")
+  }
+
   @Test("Formats ISO until date for plain output")
   func untilSummaryISO() {
     let date = Date(timeIntervalSince1970: 0)

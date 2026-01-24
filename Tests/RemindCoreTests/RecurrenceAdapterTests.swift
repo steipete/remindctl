@@ -82,4 +82,23 @@ struct RecurrenceAdapterTests {
     let roundTrip = RecurrenceAdapter.recurrence(from: rule)
     #expect(roundTrip == recurrence)
   }
+
+  @Test("Yearly recurrence maps months and weeks")
+  func yearlyMonthsWeeks() {
+    let recurrence = ReminderRecurrence(
+      frequency: .yearly,
+      interval: 1,
+      monthsOfYear: [1, 12],
+      weeksOfYear: [1, 52]
+    )
+    let rule = RecurrenceAdapter.rule(from: recurrence)
+    let months = rule.monthsOfTheYear?.map { $0.intValue }
+    let weeks = rule.weeksOfTheYear?.map { $0.intValue }
+
+    #expect(months == [1, 12])
+    #expect(weeks == [1, 52])
+
+    let roundTrip = RecurrenceAdapter.recurrence(from: rule)
+    #expect(roundTrip == recurrence)
+  }
 }

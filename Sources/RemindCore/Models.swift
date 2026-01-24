@@ -37,6 +37,7 @@ public enum ReminderRecurrenceFrequency: String, Codable, CaseIterable, Sendable
   case daily
   case weekly
   case monthly
+  case yearly
 }
 
 public enum ReminderWeekday: String, Codable, CaseIterable, Sendable {
@@ -79,6 +80,8 @@ public struct ReminderRecurrence: Codable, Sendable, Equatable {
   public let daysOfWeek: [ReminderWeekday]?
   public let daysOfMonth: [Int]?
   public let setPositions: [Int]?
+  public let monthsOfYear: [Int]?
+  public let weeksOfYear: [Int]?
   public let end: ReminderRecurrenceEnd?
 
   public init(
@@ -87,6 +90,8 @@ public struct ReminderRecurrence: Codable, Sendable, Equatable {
     daysOfWeek: [ReminderWeekday]? = nil,
     daysOfMonth: [Int]? = nil,
     setPositions: [Int]? = nil,
+    monthsOfYear: [Int]? = nil,
+    weeksOfYear: [Int]? = nil,
     end: ReminderRecurrenceEnd? = nil
   ) {
     self.frequency = frequency
@@ -94,6 +99,8 @@ public struct ReminderRecurrence: Codable, Sendable, Equatable {
     self.daysOfWeek = daysOfWeek
     self.daysOfMonth = daysOfMonth
     self.setPositions = setPositions
+    self.monthsOfYear = monthsOfYear
+    self.weeksOfYear = weeksOfYear
     self.end = end
   }
 }

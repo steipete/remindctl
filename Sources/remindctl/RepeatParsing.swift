@@ -10,6 +10,8 @@ enum RepeatParsing {
     let on: String?
     let monthDay: String?
     let setpos: String?
+    let month: String?
+    let week: String?
   }
 
   static func parseFrequency(_ value: String) throws -> ReminderRecurrenceFrequency {
@@ -20,8 +22,10 @@ enum RepeatParsing {
       return .weekly
     case "monthly":
       return .monthly
+    case "yearly":
+      return .yearly
     default:
-      throw RemindCoreError.operationFailed("Invalid repeat frequency: \"\(value)\" (use daily|weekly|monthly)")
+      throw RemindCoreError.operationFailed("Invalid repeat frequency: \"\(value)\" (use daily|weekly|monthly|yearly)")
     }
   }
 
@@ -49,6 +53,8 @@ enum RepeatParsing {
     let daysOfWeek = try input.on.map { try parseWeekdays($0) }
     let daysOfMonth = try input.monthDay.map { try parseMonthDays($0) }
     let setPositions = try input.setpos.map { try parseSetPositions($0) }
+    let monthsOfYear = try input.month.map { try parseMonths($0) }
+    let weeksOfYear = try input.week.map { try parseWeeks($0) }
     if daysOfWeek != nil {
       switch parsedFrequency {
       case .weekly:
@@ -70,6 +76,12 @@ enum RepeatParsing {
     if setPositions != nil && daysOfWeek == nil {
       throw RemindCoreError.operationFailed("--setpos requires --on")
     }
+    if monthsOfYear != nil && parsedFrequency != .yearly {
+      throw RemindCoreError.operationFailed("--month is only supported with yearly repeats")
+    }
+    if weeksOfYear != nil && parsedFrequency != .yearly {
+      throw RemindCoreError.operationFailed("--week is only supported with yearly repeats")
+    }
 
     let end: ReminderRecurrenceEnd?
     if let count = input.count {
@@ -89,6 +101,8 @@ enum RepeatParsing {
       daysOfWeek: daysOfWeek,
       daysOfMonth: daysOfMonth,
       setPositions: setPositions,
+      monthsOfYear: monthsOfYear,
+      weeksOfYear: weeksOfYear,
       end: end
     )
   }
@@ -173,5 +187,78 @@ enum RepeatParsing {
 
   private static func isValidSetPosition(_ value: Int) -> Bool {
     value == -1 || (1...4).contains(value)
+  }
+
+  private static func parseMonths(_ value: String) throws -> [Int] {
+    let tokens = value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    guard !tokens.isEmpty else {
+      throw RemindCoreError.operationFailed("Invalid months: \"\(value)\"")
+    }
+
+    var months: [Int] = []
+    var seen = Set<Int>()
+    for token in tokens where !token.isEmpty {
+      guard let month = parseMonth(String(token)) else {
+        throw RemindCoreError.operationFailed("Invalid month: \"\(token)\"")
+      }
+      if seen.insert(month).inserted {
+        months.append(month)
+      }
+    }
+    return months
+  }
+
+  private static func parseMonth(_ value: String) -> Int? {
+    if let month = Int(value), (1...12).contains(month) {
+      return month
+    }
+
+    switch value.lowercased() {
+    case "jan", "january":
+      return 1
+    case "feb", "february":
+      return 2
+    case "mar", "march":
+      return 3
+    case "apr", "april":
+      return 4
+    case "may":
+      return 5
+    case "jun", "june":
+      return 6
+    case "jul", "july":
+      return 7
+    case "aug", "august":
+      return 8
+    case "sep", "sept", "september":
+      return 9
+    case "oct", "october":
+      return 10
+    case "nov", "november":
+      return 11
+    case "dec", "december":
+      return 12
+    default:
+      return nil
+    }
+  }
+
+  private static func parseWeeks(_ value: String) throws -> [Int] {
+    let tokens = value.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+    guard !tokens.isEmpty else {
+      throw RemindCoreError.operationFailed("Invalid weeks: \"\(value)\"")
+    }
+
+    var weeks: [Int] = []
+    var seen = Set<Int>()
+    for token in tokens where !token.isEmpty {
+      guard let week = Int(token), (1...53).contains(week) else {
+        throw RemindCoreError.operationFailed("Invalid week: \"\(token)\"")
+      }
+      if seen.insert(week).inserted {
+        weeks.append(week)
+      }
+    }
+    return weeks
   }
 }

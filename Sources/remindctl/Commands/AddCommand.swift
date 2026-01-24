@@ -18,11 +18,38 @@ enum AddCommand {
             .make(label: "list", names: [.short("l"), .long("list")], help: "List name", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Due date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Notes", parsing: .singleValue),
-            .make(label: "repeat", names: [.long("repeat")], help: "daily|weekly|monthly", parsing: .singleValue),
+            .make(
+              label: "repeat",
+              names: [.long("repeat")],
+              help: "daily|weekly|monthly|yearly",
+              parsing: .singleValue
+            ),
             .make(label: "interval", names: [.long("interval")], help: "Repeat interval", parsing: .singleValue),
             .make(label: "on", names: [.long("on")], help: "Weekdays (mon,tue,...)", parsing: .singleValue),
-            .make(label: "monthDay", names: [.long("month-day")], help: "Days of month (1-31)", parsing: .singleValue),
-            .make(label: "setpos", names: [.long("setpos")], help: "Week of month (-1,1-4)", parsing: .singleValue),
+            .make(
+              label: "monthDay",
+              names: [.long("month-day")],
+              help: "Days of month (1-31)",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "setpos",
+              names: [.long("setpos")],
+              help: "Week of month (-1,1-4)",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "month",
+              names: [.long("month")],
+              help: "Months (1-12 or jan-dec)",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "week",
+              names: [.long("week")],
+              help: "Weeks of year (1-53)",
+              parsing: .singleValue
+            ),
             .make(label: "count", names: [.long("count")], help: "Repeat occurrence count", parsing: .singleValue),
             .make(label: "until", names: [.long("until")], help: "Repeat end date", parsing: .singleValue),
             .make(
@@ -67,15 +94,25 @@ enum AddCommand {
       let onValue = values.option("on")
       let monthDayValue = values.option("monthDay")
       let setposValue = values.option("setpos")
+      let monthValue = values.option("month")
+      let weekValue = values.option("week")
       let countValue = values.option("count")
       let untilValue = values.option("until")
       let priorityValue = values.option("priority")
 
-      let hasRepeatModifiers = [intervalValue, onValue, monthDayValue, setposValue, countValue, untilValue]
-        .contains { $0 != nil }
+      let hasRepeatModifiers = [
+        intervalValue,
+        onValue,
+        monthDayValue,
+        setposValue,
+        monthValue,
+        weekValue,
+        countValue,
+        untilValue,
+      ].contains { $0 != nil }
       if repeatValue == nil && hasRepeatModifiers {
         throw RemindCoreError.operationFailed(
-          "Use --repeat with --interval, --on, --month-day, --setpos, --count, or --until"
+          "Use --repeat with --interval, --on, --month-day, --setpos, --month, --week, --count, or --until"
         )
       }
 
@@ -89,7 +126,9 @@ enum AddCommand {
             until: untilValue,
             on: onValue,
             monthDay: monthDayValue,
-            setpos: setposValue
+            setpos: setposValue,
+            month: monthValue,
+            week: weekValue
           )
         )
       }

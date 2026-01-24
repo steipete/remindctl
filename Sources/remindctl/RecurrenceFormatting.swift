@@ -24,6 +24,16 @@ enum RecurrenceFormatting {
       parts.append("setpos=\(positions)")
     }
 
+    if let monthsOfYear = recurrence.monthsOfYear, !monthsOfYear.isEmpty {
+      let months = monthsOfYear.map(String.init).joined(separator: ",")
+      parts.append("month=\(months)")
+    }
+
+    if let weeksOfYear = recurrence.weeksOfYear, !weeksOfYear.isEmpty {
+      let weeks = weeksOfYear.map(String.init).joined(separator: ",")
+      parts.append("week=\(weeks)")
+    }
+
     if let end = recurrence.end {
       switch end {
       case .count(let count):
