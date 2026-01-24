@@ -18,6 +18,10 @@ enum EditCommand {
             .make(label: "list", names: [.short("l"), .long("list")], help: "Move to list", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Set due date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
+            .make(label: "repeat", names: [.long("repeat")], help: "daily|weekly", parsing: .singleValue),
+            .make(label: "interval", names: [.long("interval")], help: "Repeat interval", parsing: .singleValue),
+            .make(label: "count", names: [.long("count")], help: "Repeat occurrence count", parsing: .singleValue),
+            .make(label: "until", names: [.long("until")], help: "Repeat end date", parsing: .singleValue),
             .make(
               label: "priority",
               names: [.short("p"), .long("priority")],
@@ -54,6 +58,10 @@ enum EditCommand {
       let title = values.option("title")
       let listName = values.option("list")
       let notes = values.option("notes")
+      let repeatValue = values.option("repeat")
+      let intervalValue = values.option("interval")
+      let countValue = values.option("count")
+      let untilValue = values.option("until")
 
       var dueUpdate: Date??
       if let dueValue = values.option("due") {
@@ -71,6 +79,19 @@ enum EditCommand {
         priority = try CommandHelpers.parsePriority(priorityValue)
       }
 
+      if repeatValue == nil && (intervalValue != nil || countValue != nil || untilValue != nil) {
+        throw RemindCoreError.operationFailed("Use --repeat with --interval, --count, or --until")
+      }
+
+      let recurrenceUpdate: ReminderRecurrence?? = try repeatValue.map {
+        try RepeatParsing.parseRecurrence(
+          frequency: $0,
+          interval: intervalValue,
+          count: countValue,
+          until: untilValue
+        )
+      }
+
       let completeFlag = values.flag("complete")
       let incompleteFlag = values.flag("incomplete")
       if completeFlag && incompleteFlag {
@@ -78,7 +99,20 @@ enum EditCommand {
       }
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
-      if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil && isCompleted == nil {
+      if recurrenceUpdate != nil && dueUpdate == nil && reminder.dueDate == nil {
+        dueUpdate = .some(Date())
+      }
+
+      let hasChanges =
+        title != nil
+        || listName != nil
+        || notes != nil
+        || dueUpdate != nil
+        || priority != nil
+        || recurrenceUpdate != nil
+        || isCompleted != nil
+
+      if !hasChanges {
         throw RemindCoreError.operationFailed("No changes specified")
       }
 
@@ -87,6 +121,7 @@ enum EditCommand {
         notes: notes,
         dueDate: dueUpdate,
         priority: priority,
+        recurrence: recurrenceUpdate,
         listName: listName,
         isCompleted: isCompleted
       )
