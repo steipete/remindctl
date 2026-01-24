@@ -103,6 +103,9 @@ public actor RemindersStore {
     if let dueDate = draft.dueDate {
       reminder.dueDateComponents = calendarComponents(from: dueDate)
     }
+    if let recurrence = draft.recurrence {
+      reminder.recurrenceRules = [RecurrenceAdapter.rule(from: recurrence)]
+    }
     try eventStore.save(reminder, commit: true)
     return ReminderItem(
       id: reminder.calendarItemIdentifier,
@@ -112,6 +115,7 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      recurrence: reminder.recurrenceRules?.compactMap(RecurrenceAdapter.recurrence(from:)).first,
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -136,6 +140,13 @@ public actor RemindersStore {
     if let priority = update.priority {
       reminder.priority = priority.eventKitValue
     }
+    if let recurrenceUpdate = update.recurrence {
+      if let recurrence = recurrenceUpdate {
+        reminder.recurrenceRules = [RecurrenceAdapter.rule(from: recurrence)]
+      } else {
+        reminder.recurrenceRules = nil
+      }
+    }
     if let listName = update.listName {
       reminder.calendar = try calendar(named: listName)
     }
@@ -153,6 +164,7 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      recurrence: reminder.recurrenceRules?.compactMap(RecurrenceAdapter.recurrence(from:)).first,
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -173,6 +185,7 @@ public actor RemindersStore {
           completionDate: reminder.completionDate,
           priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
           dueDate: date(from: reminder.dueDateComponents),
+          recurrence: reminder.recurrenceRules?.compactMap(RecurrenceAdapter.recurrence(from:)).first,
           listID: reminder.calendar.calendarIdentifier,
           listName: reminder.calendar.title
         )
@@ -190,7 +203,9 @@ public actor RemindersStore {
     }
     return deleted
   }
+}
 
+extension RemindersStore {
   private func requestFullAccess() async throws -> Bool {
     try await withCheckedThrowingContinuation { continuation in
       eventStore.requestFullAccessToReminders { granted, error in
@@ -212,6 +227,7 @@ public actor RemindersStore {
       let completionDate: Date?
       let priority: Int
       let dueDateComponents: DateComponents?
+      let recurrence: ReminderRecurrence?
       let listID: String
       let listName: String
     }
@@ -228,6 +244,7 @@ public actor RemindersStore {
             completionDate: reminder.completionDate,
             priority: Int(reminder.priority),
             dueDateComponents: reminder.dueDateComponents,
+            recurrence: reminder.recurrenceRules?.compactMap(RecurrenceAdapter.recurrence(from:)).first,
             listID: reminder.calendar.calendarIdentifier,
             listName: reminder.calendar.title
           )
@@ -245,6 +262,7 @@ public actor RemindersStore {
         completionDate: data.completionDate,
         priority: ReminderPriority(eventKitValue: data.priority),
         dueDate: date(from: data.dueDateComponents),
+        recurrence: data.recurrence,
         listID: data.listID,
         listName: data.listName
       )
@@ -284,6 +302,7 @@ public actor RemindersStore {
       completionDate: reminder.completionDate,
       priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
       dueDate: date(from: reminder.dueDateComponents),
+      recurrence: reminder.recurrenceRules?.compactMap(RecurrenceAdapter.recurrence(from:)).first,
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
