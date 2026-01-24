@@ -20,6 +20,17 @@ struct RecurrenceFormattingTests {
     #expect(summary == "repeat=weekly interval=2 count=4")
   }
 
+  @Test("Formats weekly recurrence with days")
+  func weeklyDaysSummary() {
+    let recurrence = ReminderRecurrence(
+      frequency: .weekly,
+      interval: 1,
+      daysOfWeek: [.monday, .wednesday, .friday]
+    )
+    let summary = RecurrenceFormatting.summary(for: recurrence, useISO: false)
+    #expect(summary == "repeat=weekly on=mon,wed,fri")
+  }
+
   @Test("Formats ISO until date for plain output")
   func untilSummaryISO() {
     let date = Date(timeIntervalSince1970: 0)

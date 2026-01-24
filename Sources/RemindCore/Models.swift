@@ -38,6 +38,35 @@ public enum ReminderRecurrenceFrequency: String, Codable, CaseIterable, Sendable
   case weekly
 }
 
+public enum ReminderWeekday: String, Codable, CaseIterable, Sendable {
+  case monday = "mon"
+  case tuesday = "tue"
+  case wednesday = "wed"
+  case thursday = "thu"
+  case friday = "fri"
+  case saturday = "sat"
+  case sunday = "sun"
+
+  public var displayOrder: Int {
+    switch self {
+    case .monday:
+      return 1
+    case .tuesday:
+      return 2
+    case .wednesday:
+      return 3
+    case .thursday:
+      return 4
+    case .friday:
+      return 5
+    case .saturday:
+      return 6
+    case .sunday:
+      return 7
+    }
+  }
+}
+
 public enum ReminderRecurrenceEnd: Codable, Sendable, Equatable {
   case count(Int)
   case until(Date)
@@ -46,15 +75,18 @@ public enum ReminderRecurrenceEnd: Codable, Sendable, Equatable {
 public struct ReminderRecurrence: Codable, Sendable, Equatable {
   public let frequency: ReminderRecurrenceFrequency
   public let interval: Int
+  public let daysOfWeek: [ReminderWeekday]?
   public let end: ReminderRecurrenceEnd?
 
   public init(
     frequency: ReminderRecurrenceFrequency,
     interval: Int = 1,
+    daysOfWeek: [ReminderWeekday]? = nil,
     end: ReminderRecurrenceEnd? = nil
   ) {
     self.frequency = frequency
     self.interval = interval
+    self.daysOfWeek = daysOfWeek
     self.end = end
   }
 }

@@ -10,7 +10,8 @@ struct RepeatParsingTests {
       frequency: "daily",
       interval: nil,
       count: nil,
-      until: nil
+      until: nil,
+      on: nil
     )
     #expect(recurrence.frequency == .daily)
     #expect(recurrence.interval == 1)
@@ -23,7 +24,8 @@ struct RepeatParsingTests {
       frequency: "weekly",
       interval: "2",
       count: "5",
-      until: nil
+      until: nil,
+      on: nil
     )
     #expect(recurrence.frequency == .weekly)
     #expect(recurrence.interval == 2)
@@ -36,7 +38,8 @@ struct RepeatParsingTests {
       frequency: "daily",
       interval: nil,
       count: nil,
-      until: "2026-01-03T12:34:56Z"
+      until: "2026-01-03T12:34:56Z",
+      on: nil
     )
     guard case .until = recurrence.end else {
       #expect(Bool(false))
@@ -51,7 +54,8 @@ struct RepeatParsingTests {
         frequency: "monthly",
         interval: nil,
         count: nil,
-        until: nil
+        until: nil,
+        on: nil
       )
     }
   }
@@ -63,7 +67,33 @@ struct RepeatParsingTests {
         frequency: "daily",
         interval: nil,
         count: "2",
-        until: "tomorrow"
+        until: "tomorrow",
+        on: nil
+      )
+    }
+  }
+
+  @Test("Parses weekly days")
+  func weeklyDays() throws {
+    let recurrence = try RepeatParsing.parseRecurrence(
+      frequency: "weekly",
+      interval: nil,
+      count: nil,
+      until: nil,
+      on: "mon,wed,fri"
+    )
+    #expect(recurrence.daysOfWeek == [.monday, .wednesday, .friday])
+  }
+
+  @Test("Rejects --on for non-weekly")
+  func onNonWeekly() {
+    #expect(throws: RemindCoreError.self) {
+      _ = try RepeatParsing.parseRecurrence(
+        frequency: "daily",
+        interval: nil,
+        count: nil,
+        until: nil,
+        on: "mon"
       )
     }
   }

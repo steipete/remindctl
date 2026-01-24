@@ -9,6 +9,11 @@ enum RecurrenceFormatting {
       parts.append("interval=\(recurrence.interval)")
     }
 
+    if let daysOfWeek = recurrence.daysOfWeek, !daysOfWeek.isEmpty {
+      let days = daysOfWeek.map(\.rawValue).joined(separator: ",")
+      parts.append("on=\(days)")
+    }
+
     if let end = recurrence.end {
       switch end {
       case .count(let count):

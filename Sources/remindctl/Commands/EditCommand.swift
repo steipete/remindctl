@@ -20,6 +20,7 @@ enum EditCommand {
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
             .make(label: "repeat", names: [.long("repeat")], help: "daily|weekly", parsing: .singleValue),
             .make(label: "interval", names: [.long("interval")], help: "Repeat interval", parsing: .singleValue),
+            .make(label: "on", names: [.long("on")], help: "Weekdays (mon,tue,...)", parsing: .singleValue),
             .make(label: "count", names: [.long("count")], help: "Repeat occurrence count", parsing: .singleValue),
             .make(label: "until", names: [.long("until")], help: "Repeat end date", parsing: .singleValue),
             .make(
@@ -60,6 +61,7 @@ enum EditCommand {
       let notes = values.option("notes")
       let repeatValue = values.option("repeat")
       let intervalValue = values.option("interval")
+      let onValue = values.option("on")
       let countValue = values.option("count")
       let untilValue = values.option("until")
 
@@ -79,8 +81,8 @@ enum EditCommand {
         priority = try CommandHelpers.parsePriority(priorityValue)
       }
 
-      if repeatValue == nil && (intervalValue != nil || countValue != nil || untilValue != nil) {
-        throw RemindCoreError.operationFailed("Use --repeat with --interval, --count, or --until")
+      if repeatValue == nil && (intervalValue != nil || onValue != nil || countValue != nil || untilValue != nil) {
+        throw RemindCoreError.operationFailed("Use --repeat with --interval, --on, --count, or --until")
       }
 
       let recurrenceUpdate: ReminderRecurrence?? = try repeatValue.map {
@@ -88,7 +90,8 @@ enum EditCommand {
           frequency: $0,
           interval: intervalValue,
           count: countValue,
-          until: untilValue
+          until: untilValue,
+          on: onValue
         )
       }
 

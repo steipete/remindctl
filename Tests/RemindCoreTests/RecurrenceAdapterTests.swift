@@ -31,4 +31,20 @@ struct RecurrenceAdapterTests {
     let roundTrip = RecurrenceAdapter.recurrence(from: rule)
     #expect(roundTrip == recurrence)
   }
+
+  @Test("Weekly recurrence maps days of week")
+  func weeklyDays() {
+    let recurrence = ReminderRecurrence(
+      frequency: .weekly,
+      interval: 1,
+      daysOfWeek: [.monday, .wednesday, .friday]
+    )
+    let rule = RecurrenceAdapter.rule(from: recurrence)
+    let days = rule.daysOfTheWeek?.map(\.dayOfTheWeek)
+
+    #expect(days == [.monday, .wednesday, .friday])
+
+    let roundTrip = RecurrenceAdapter.recurrence(from: rule)
+    #expect(roundTrip == recurrence)
+  }
 }
