@@ -17,7 +17,7 @@ format:
 
 lint:
 	swift format lint --recursive Sources Tests
-	swiftlint
+	swiftlint lint --no-cache
 
 test:
 	scripts/generate-version.sh
