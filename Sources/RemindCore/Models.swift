@@ -82,12 +82,20 @@ public struct ReminderDraft: Sendable {
   public let notes: String?
   public let dueDate: Date?
   public let priority: ReminderPriority
+  public let parentID: String?
 
-  public init(title: String, notes: String?, dueDate: Date?, priority: ReminderPriority) {
+  public init(
+    title: String,
+    notes: String?,
+    dueDate: Date?,
+    priority: ReminderPriority,
+    parentID: String? = nil
+  ) {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
     self.priority = priority
+    self.parentID = parentID
   }
 }
 
@@ -98,6 +106,7 @@ public struct ReminderUpdate: Sendable {
   public let priority: ReminderPriority?
   public let listName: String?
   public let isCompleted: Bool?
+  public let parentID: String?
 
   public init(
     title: String? = nil,
@@ -105,7 +114,8 @@ public struct ReminderUpdate: Sendable {
     dueDate: Date?? = nil,
     priority: ReminderPriority? = nil,
     listName: String? = nil,
-    isCompleted: Bool? = nil
+    isCompleted: Bool? = nil,
+    parentID: String? = nil
   ) {
     self.title = title
     self.notes = notes
@@ -113,5 +123,6 @@ public struct ReminderUpdate: Sendable {
     self.priority = priority
     self.listName = listName
     self.isCompleted = isCompleted
+    self.parentID = parentID
   }
 }

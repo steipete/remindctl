@@ -49,7 +49,9 @@ remindctl list Projects --create
 
 remindctl add "Buy milk"
 remindctl add --title "Call mom" --list Personal --due tomorrow
+remindctl add "Follow up" --parent 4A83
 remindctl edit 1 --title "New title" --due 2026-01-04
+remindctl edit 2 --parent 4A83
 remindctl complete 1 2 3
 remindctl delete 4A83 --force
 remindctl status                # permission status
@@ -67,6 +69,11 @@ Accepted by `--due` and filters:
 - `YYYY-MM-DD`
 - `YYYY-MM-DD HH:mm`
 - ISO 8601 (`2026-01-03T12:34:56Z`)
+
+## Subtasks
+Use `--parent` (or `--under`) with `add` and `edit` to attach a reminder to an existing one. If the underlying
+EventKit API exposes parent relationships on your system, remindctl will set a real subtask. Otherwise it stores
+fallback metadata in the reminder notes as `remindctl-parent: <id>` so the link is preserved.
 
 ## Permissions
 Run `remindctl authorize` to trigger the system prompt. If access is denied, enable

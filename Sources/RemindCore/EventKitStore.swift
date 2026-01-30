@@ -103,18 +103,15 @@ public actor RemindersStore {
     if let dueDate = draft.dueDate {
       reminder.dueDateComponents = calendarComponents(from: dueDate)
     }
+    if let parentID = draft.parentID {
+      let parent = try reminder(withID: parentID)
+      try validateParent(parent, matches: calendar)
+      if !applyParent(parent, to: reminder) {
+        reminder.notes = updateParentNotes(current: reminder.notes, parentID: parentID)
+      }
+    }
     try eventStore.save(reminder, commit: true)
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func updateReminder(id: String, update: ReminderUpdate) async throws -> ReminderItem {
@@ -142,20 +139,17 @@ public actor RemindersStore {
     if let isCompleted = update.isCompleted {
       reminder.isCompleted = isCompleted
     }
+    if let parentID = update.parentID {
+      let parent = try reminder(withID: parentID)
+      try validateParent(parent, matches: reminder.calendar)
+      if !applyParent(parent, to: reminder) {
+        reminder.notes = updateParentNotes(current: reminder.notes, parentID: parentID)
+      }
+    }
 
     try eventStore.save(reminder, commit: true)
 
-    return ReminderItem(
-      id: reminder.calendarItemIdentifier,
-      title: reminder.title ?? "",
-      notes: reminder.notes,
-      isCompleted: reminder.isCompleted,
-      completionDate: reminder.completionDate,
-      priority: ReminderPriority(eventKitValue: Int(reminder.priority)),
-      dueDate: date(from: reminder.dueDateComponents),
-      listID: reminder.calendar.calendarIdentifier,
-      listName: reminder.calendar.title
-    )
+    return item(from: reminder)
   }
 
   public func completeReminders(ids: [String]) async throws -> [ReminderItem] {
@@ -287,5 +281,40 @@ public actor RemindersStore {
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
+  }
+
+  private func validateParent(_ parent: EKReminder, matches calendar: EKCalendar) throws {
+    if parent.calendar.calendarIdentifier != calendar.calendarIdentifier {
+      throw RemindCoreError.operationFailed(
+        "Parent reminder is in list \"\(parent.calendar.title)\". Subtasks must be in the same list."
+      )
+    }
+  }
+
+  private func applyParent(_ parent: EKReminder, to reminder: EKReminder) -> Bool {
+    if reminder.responds(to: Selector(("setParent:"))) {
+      _ = reminder.perform(Selector(("setParent:")), with: parent)
+      return true
+    }
+    if reminder.responds(to: Selector(("setParentReminder:"))) {
+      _ = reminder.perform(Selector(("setParentReminder:")), with: parent)
+      return true
+    }
+    return false
+  }
+
+  private func updateParentNotes(current: String?, parentID: String) -> String {
+    let parentLine = "remindctl-parent: \(parentID)"
+    let existing = current?.components(separatedBy: .newlines) ?? []
+    if existing.isEmpty || (existing.count == 1 && existing[0].isEmpty) {
+      return parentLine
+    }
+    var updated = existing
+    if let index = existing.firstIndex(where: { $0.hasPrefix("remindctl-parent: ") }) {
+      updated[index] = parentLine
+    } else {
+      updated.append(parentLine)
+    }
+    return updated.joined(separator: "\n")
   }
 }

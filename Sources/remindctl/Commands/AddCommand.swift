@@ -16,6 +16,12 @@ enum AddCommand {
           options: [
             .make(label: "title", names: [.long("title")], help: "Reminder title", parsing: .singleValue),
             .make(label: "list", names: [.short("l"), .long("list")], help: "List name", parsing: .singleValue),
+            .make(
+              label: "parent",
+              names: [.long("parent"), .aliasLong("under")],
+              help: "Parent reminder (index or ID prefix)",
+              parsing: .singleValue
+            ),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Due date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Notes", parsing: .singleValue),
             .make(
@@ -31,6 +37,7 @@ enum AddCommand {
         "remindctl add \"Buy milk\"",
         "remindctl add --title \"Call mom\" --list Personal --due tomorrow",
         "remindctl add \"Review docs\" --priority high",
+        "remindctl add \"Follow up\" --parent 4A83",
       ]
     ) { values, runtime in
       let titleOption = values.option("title")
@@ -53,6 +60,7 @@ enum AddCommand {
       }
 
       let listName = values.option("list")
+      let parentInput = values.option("parent")
       let notes = values.option("notes")
       let dueValue = values.option("due")
       let priorityValue = values.option("priority")
@@ -63,8 +71,22 @@ enum AddCommand {
       let store = RemindersStore()
       try await store.requestAccess()
 
+      var parentReminder: ReminderItem?
+      if let parentInput {
+        let reminders = try await store.reminders(in: nil)
+        let resolved = try IDResolver.resolve([parentInput], from: reminders)
+        parentReminder = resolved.first
+      }
+
       let targetList: String?
-      if let listName {
+      if let parentReminder {
+        if let listName, listName != parentReminder.listName {
+          throw RemindCoreError.operationFailed(
+            "Parent reminder is in list \"\(parentReminder.listName)\". Use that list or omit --list."
+          )
+        }
+        targetList = parentReminder.listName
+      } else if let listName {
         targetList = listName
       } else {
         targetList = await store.defaultListName()
@@ -73,7 +95,13 @@ enum AddCommand {
         throw RemindCoreError.operationFailed("No default list found. Specify --list.")
       }
 
-      let draft = ReminderDraft(title: title, notes: notes, dueDate: dueDate, priority: priority)
+      let draft = ReminderDraft(
+        title: title,
+        notes: notes,
+        dueDate: dueDate,
+        priority: priority,
+        parentID: parentReminder?.id
+      )
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }

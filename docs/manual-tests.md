@@ -16,8 +16,10 @@ Run on a local GUI session (not SSH-only) so the Reminders permission prompt can
 - list lists: `remindctl list`
 - list list contents: `remindctl list "remindctl-manual-YYYYMMDD"`
 - add reminders (3 variants)
+- add subtask: `remindctl add "Follow up" --parent 1`
 - show filters: `today`, `tomorrow`, `week`, `overdue`, `upcoming`, `completed`, `all`
 - edit: update title/notes/priority/due date
+- edit: re-parent reminder with `--parent`
 - complete: mark one reminder complete
 - delete: remove reminders, then delete list
 

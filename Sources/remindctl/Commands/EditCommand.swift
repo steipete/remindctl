@@ -16,6 +16,12 @@ enum EditCommand {
           options: [
             .make(label: "title", names: [.short("t"), .long("title")], help: "New title", parsing: .singleValue),
             .make(label: "list", names: [.short("l"), .long("list")], help: "Move to list", parsing: .singleValue),
+            .make(
+              label: "parent",
+              names: [.long("parent"), .aliasLong("under")],
+              help: "Set parent reminder (index or ID prefix)",
+              parsing: .singleValue
+            ),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Set due date", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
             .make(
@@ -37,6 +43,7 @@ enum EditCommand {
         "remindctl edit 4A83 --due tomorrow",
         "remindctl edit 2 --priority high --notes \"Call before noon\"",
         "remindctl edit 3 --clear-due",
+        "remindctl edit 2 --parent 4A83",
       ]
     ) { values, runtime in
       guard let input = values.argument(0) else {
@@ -52,8 +59,9 @@ enum EditCommand {
       }
 
       let title = values.option("title")
-      let listName = values.option("list")
+      var listName = values.option("list")
       let notes = values.option("notes")
+      let parentInput = values.option("parent")
 
       var dueUpdate: Date??
       if let dueValue = values.option("due") {
@@ -78,7 +86,31 @@ enum EditCommand {
       }
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
-      if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil && isCompleted == nil {
+      var parentReminder: ReminderItem?
+      if let parentInput {
+        let resolvedParent = try IDResolver.resolve([parentInput], from: reminders)
+        parentReminder = resolvedParent.first
+        if parentReminder?.id == reminder.id {
+          throw RemindCoreError.operationFailed("Parent reminder cannot be the reminder being edited")
+        }
+        if let parentReminder, let listName, listName != parentReminder.listName {
+          throw RemindCoreError.operationFailed(
+            "Parent reminder is in list \"\(parentReminder.listName)\". Use that list or omit --list."
+          )
+        }
+        if let parentReminder, listName == nil, reminder.listName != parentReminder.listName {
+          listName = parentReminder.listName
+        }
+      }
+
+      if title == nil
+        && listName == nil
+        && notes == nil
+        && dueUpdate == nil
+        && priority == nil
+        && isCompleted == nil
+        && parentReminder == nil
+      {
         throw RemindCoreError.operationFailed("No changes specified")
       }
 
@@ -88,7 +120,8 @@ enum EditCommand {
         dueDate: dueUpdate,
         priority: priority,
         listName: listName,
-        isCompleted: isCompleted
+        isCompleted: isCompleted,
+        parentID: parentReminder?.id
       )
 
       let updated = try await store.updateReminder(id: reminder.id, update: update)
