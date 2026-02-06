@@ -38,6 +38,15 @@ public enum DateParsing {
     return formatter.string(from: date)
   }
 
+  public static func formatDisplayAllDay(_ date: Date, calendar: Calendar = .current) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale.current
+    formatter.timeZone = calendar.timeZone
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .none
+    return formatter.string(from: date)
+  }
+
   private static func parseRelativeDate(_ input: String, now: Date, calendar: Calendar) -> Date? {
     switch input {
     case "today":

@@ -50,7 +50,7 @@ enum OutputRenderer {
   static func printReminder(_ reminder: ReminderItem, format: OutputFormat) {
     switch format {
     case .standard:
-      let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let due = formatDueDate(reminder.dueDate, isAllDay: reminder.isAllDay)
       Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)")
     case .plain:
       Swift.print(plainLine(for: reminder))
@@ -96,10 +96,15 @@ enum OutputRenderer {
     }
     for (index, reminder) in sorted.enumerated() {
       let status = reminder.isCompleted ? "x" : " "
-      let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
+      let due = formatDueDate(reminder.dueDate, isAllDay: reminder.isAllDay)
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
       Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)")
     }
+  }
+
+  private static func formatDueDate(_ dueDate: Date?, isAllDay: Bool) -> String {
+    guard let dueDate else { return "no due date" }
+    return isAllDay ? DateParsing.formatDisplayAllDay(dueDate) : DateParsing.formatDisplay(dueDate)
   }
 
   private static func printRemindersPlain(_ reminders: [ReminderItem]) {

@@ -53,6 +53,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let dueDate: Date?
   public let listID: String
   public let listName: String
+  public let isAllDay: Bool
 
   public init(
     id: String,
@@ -63,7 +64,8 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     priority: ReminderPriority,
     dueDate: Date?,
     listID: String,
-    listName: String
+    listName: String,
+    isAllDay: Bool = false
   ) {
     self.id = id
     self.title = title
@@ -74,6 +76,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.dueDate = dueDate
     self.listID = listID
     self.listName = listName
+    self.isAllDay = isAllDay
   }
 }
 
@@ -82,12 +85,14 @@ public struct ReminderDraft: Sendable {
   public let notes: String?
   public let dueDate: Date?
   public let priority: ReminderPriority
+  public let isAllDay: Bool
 
-  public init(title: String, notes: String?, dueDate: Date?, priority: ReminderPriority) {
+  public init(title: String, notes: String?, dueDate: Date?, priority: ReminderPriority, isAllDay: Bool = false) {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
     self.priority = priority
+    self.isAllDay = isAllDay
   }
 }
 
@@ -98,6 +103,7 @@ public struct ReminderUpdate: Sendable {
   public let priority: ReminderPriority?
   public let listName: String?
   public let isCompleted: Bool?
+  public let isAllDay: Bool?
 
   public init(
     title: String? = nil,
@@ -105,7 +111,8 @@ public struct ReminderUpdate: Sendable {
     dueDate: Date?? = nil,
     priority: ReminderPriority? = nil,
     listName: String? = nil,
-    isCompleted: Bool? = nil
+    isCompleted: Bool? = nil,
+    isAllDay: Bool? = nil
   ) {
     self.title = title
     self.notes = notes
@@ -113,5 +120,6 @@ public struct ReminderUpdate: Sendable {
     self.priority = priority
     self.listName = listName
     self.isCompleted = isCompleted
+    self.isAllDay = isAllDay
   }
 }
