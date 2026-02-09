@@ -10,6 +10,7 @@ struct ReminderFilterParseTests {
     #expect(ReminderFiltering.parse("w") == .week)
     #expect(ReminderFiltering.parse("o") == .overdue)
     #expect(ReminderFiltering.parse("u") == .upcoming)
+    #expect(ReminderFiltering.parse("open") == .open)
     #expect(ReminderFiltering.parse("done") == .completed)
     #expect(ReminderFiltering.parse("all") == .all)
   }

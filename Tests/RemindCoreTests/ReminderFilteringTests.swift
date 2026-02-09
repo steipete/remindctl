@@ -108,6 +108,16 @@ struct ReminderFilteringTests {
     #expect(result.count == 3)
   }
 
+  @Test("Open filter includes no due date and excludes completed")
+  func openFilter() {
+    let now = Date(timeIntervalSince1970: 1_700_000_000)
+    let items = reminders(now: now)
+    let result = ReminderFiltering.apply(items, filter: .open, now: now, calendar: calendar)
+    #expect(result.count == 4)
+    #expect(result.contains(where: { $0.title == "No Due" }))
+    #expect(result.allSatisfy { !$0.isCompleted })
+  }
+
   @Test("Date filter")
   func dateFilter() {
     let now = Date(timeIntervalSince1970: 1_700_000_000)

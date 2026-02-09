@@ -6,6 +6,7 @@ public enum ReminderFilter: Equatable, Sendable {
   case week
   case overdue
   case upcoming
+  case open
   case completed
   case date(Date)
   case all
@@ -25,6 +26,8 @@ public enum ReminderFiltering {
       return .overdue
     case "upcoming", "u":
       return .upcoming
+    case "open":
+      return .open
     case "completed", "done", "c":
       return .completed
     case "all", "a":
@@ -76,6 +79,8 @@ public enum ReminderFiltering {
       return reminders.filter { reminder in
         !reminder.isCompleted && reminder.dueDate != nil
       }
+    case .open:
+      return reminders.filter { !$0.isCompleted }
     case .completed:
       return reminders.filter { $0.isCompleted }
     case .date(let date):
