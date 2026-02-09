@@ -7,13 +7,13 @@ enum ShowCommand {
     CommandSpec(
       name: "show",
       abstract: "Show reminders",
-      discussion: "Filters: today, tomorrow, week, overdue, upcoming, completed, all, or a date string.",
+      discussion: "Filters: today, tomorrow, week, overdue, upcoming, open, completed, all, or a date string.",
       signature: CommandSignatures.withRuntimeFlags(
         CommandSignature(
           arguments: [
             .make(
               label: "filter",
-              help: "today|tomorrow|week|overdue|upcoming|completed|all|<date>",
+              help: "today|tomorrow|week|overdue|upcoming|open|completed|all|<date>",
               isOptional: true
             )
           ],

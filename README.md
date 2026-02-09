@@ -37,6 +37,7 @@ remindctl tomorrow              # show tomorrow
 remindctl week                  # show this week
 remindctl overdue               # overdue
 remindctl upcoming              # upcoming
+remindctl open                  # all incomplete reminders
 remindctl completed             # completed
 remindctl all                   # all reminders
 remindctl 2026-01-03            # specific date
