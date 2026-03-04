@@ -49,6 +49,9 @@ remindctl list Projects --create
 
 remindctl add "Buy milk"
 remindctl add --title "Call mom" --list Personal --due tomorrow
+remindctl add "Plan trip" --due "2026-03-06"          # all-day
+remindctl add "Doctor" --due "2026-03-06 15:00"       # timed
+remindctl add "Holiday" --due "2026-03-06" --all-day  # force all-day
 remindctl edit 1 --title "New title" --due 2026-01-04
 remindctl complete 1 2 3
 remindctl delete 4A83 --force
@@ -67,6 +70,9 @@ Accepted by `--due` and filters:
 - `YYYY-MM-DD`
 - `YYYY-MM-DD HH:mm`
 - ISO 8601 (`2026-01-03T12:34:56Z`)
+
+For `add`, date-only values (for example `2026-03-06`) create all-day reminders.
+Use `--all-day` to explicitly force all-day behavior when setting `--due`.
 
 ## Permissions
 Run `remindctl authorize` to trigger the system prompt. If access is denied, enable

@@ -81,12 +81,20 @@ public struct ReminderDraft: Sendable {
   public let title: String
   public let notes: String?
   public let dueDate: Date?
+  public let dueDateIsAllDay: Bool
   public let priority: ReminderPriority
 
-  public init(title: String, notes: String?, dueDate: Date?, priority: ReminderPriority) {
+  public init(
+    title: String,
+    notes: String?,
+    dueDate: Date?,
+    dueDateIsAllDay: Bool = false,
+    priority: ReminderPriority
+  ) {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
+    self.dueDateIsAllDay = dueDateIsAllDay
     self.priority = priority
   }
 }

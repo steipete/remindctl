@@ -24,12 +24,16 @@ enum AddCommand {
               help: "none|low|medium|high",
               parsing: .singleValue
             ),
+          ],
+          flags: [
+            .make(label: "allDay", names: [.long("all-day")], help: "Treat --due as an all-day reminder"),
           ]
         )
       ),
       usageExamples: [
         "remindctl add \"Buy milk\"",
         "remindctl add --title \"Call mom\" --list Personal --due tomorrow",
+        "remindctl add \"Plan trip\" --due 2026-03-06 --all-day",
         "remindctl add \"Review docs\" --priority high",
       ]
     ) { values, runtime in
@@ -56,8 +60,13 @@ enum AddCommand {
       let notes = values.option("notes")
       let dueValue = values.option("due")
       let priorityValue = values.option("priority")
+      let allDayFlag = values.flag("allDay")
 
-      let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
+      if allDayFlag && dueValue == nil {
+        throw RemindCoreError.operationFailed("--all-day requires --due")
+      }
+
+      let dueInput = try dueValue.map { try CommandHelpers.parseAddDueDate($0, forceAllDay: allDayFlag) }
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
 
       let store = RemindersStore()
@@ -73,7 +82,13 @@ enum AddCommand {
         throw RemindCoreError.operationFailed("No default list found. Specify --list.")
       }
 
-      let draft = ReminderDraft(title: title, notes: notes, dueDate: dueDate, priority: priority)
+      let draft = ReminderDraft(
+        title: title,
+        notes: notes,
+        dueDate: dueInput?.date,
+        dueDateIsAllDay: dueInput?.isAllDay ?? false,
+        priority: priority
+      )
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }

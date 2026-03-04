@@ -101,7 +101,7 @@ public actor RemindersStore {
     reminder.calendar = calendar
     reminder.priority = draft.priority.eventKitValue
     if let dueDate = draft.dueDate {
-      reminder.dueDateComponents = calendarComponents(from: dueDate)
+      reminder.dueDateComponents = calendarComponents(from: dueDate, isAllDay: draft.dueDateIsAllDay)
     }
     try eventStore.save(reminder, commit: true)
     return ReminderItem(
@@ -266,8 +266,11 @@ public actor RemindersStore {
     return calendar
   }
 
-  private func calendarComponents(from date: Date) -> DateComponents {
-    calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
+  private func calendarComponents(from date: Date, isAllDay: Bool = false) -> DateComponents {
+    if isAllDay {
+      return calendar.dateComponents([.year, .month, .day], from: date)
+    }
+    return calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date)
   }
 
   private func date(from components: DateComponents?) -> Date? {
