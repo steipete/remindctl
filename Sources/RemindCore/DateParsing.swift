@@ -29,13 +29,13 @@ public enum DateParsing {
     return nil
   }
 
-  public static func formatDisplay(_ date: Date, calendar: Calendar = .current) -> String {
+  public static func formatDisplay(_ date: Date, isAllDay: Bool = false, calendar: Calendar = .current) -> String {
     let formatter = DateFormatter()
     formatter.locale = Locale.current
     formatter.timeZone = calendar.timeZone
     formatter.dateStyle = .medium
-    formatter.timeStyle = .short
-    return formatter.string(from: date)
+    formatter.timeStyle = isAllDay ? .none : .short
+    return isAllDay ? "\(formatter.string(from: date)) (all day)" : formatter.string(from: date)
   }
 
   private static func parseRelativeDate(_ input: String, now: Date, calendar: Calendar) -> Date? {
