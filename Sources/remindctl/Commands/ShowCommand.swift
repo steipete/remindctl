@@ -23,7 +23,13 @@ enum ShowCommand {
               names: [.short("l"), .long("list")],
               help: "Limit to a specific list",
               parsing: .singleValue
-            )
+            ),
+            .make(
+              label: "tag",
+              names: [.long("tag")],
+              help: "Filter by tag (repeatable or comma-separated)",
+              parsing: .singleValue
+            ),
           ]
         )
       ),
@@ -33,10 +39,12 @@ enum ShowCommand {
         "remindctl show overdue",
         "remindctl show 2026-01-04",
         "remindctl show --list Work",
+        "remindctl show --tag shopping",
       ]
     ) { values, runtime in
       let listName = values.option("list")
       let filterToken = values.argument(0)
+      let tagFilters = try CommandHelpers.parseTags(values.optionValues("tag")).map { $0.lowercased() }
 
       let filter: ReminderFilter
       if let token = filterToken {
@@ -51,7 +59,17 @@ enum ShowCommand {
       let store = RemindersStore()
       try await store.requestAccess()
       let reminders = try await store.reminders(in: listName)
-      let filtered = ReminderFiltering.apply(reminders, filter: filter)
+      let filteredByDate = ReminderFiltering.apply(reminders, filter: filter)
+      let filtered: [ReminderItem]
+      if tagFilters.isEmpty {
+        filtered = filteredByDate
+      } else {
+        let tagFilterSet = Set(tagFilters)
+        filtered = filteredByDate.filter { reminder in
+          let reminderTags = Set(reminder.tags.map { $0.lowercased() })
+          return !tagFilterSet.isDisjoint(with: reminderTags)
+        }
+      }
       OutputRenderer.printReminders(filtered, format: runtime.outputFormat)
     }
   }

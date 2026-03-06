@@ -20,6 +20,39 @@ struct AuthorizationSummary: Codable, Sendable, Equatable {
   let authorized: Bool
 }
 
+struct TagSummary: Codable, Sendable, Equatable {
+  let tag: String
+  let count: Int
+}
+
+struct ReminderOutput: Codable, Sendable, Equatable {
+  let id: String
+  let title: String
+  let titleWithoutTags: String
+  let tags: [String]
+  let notes: String?
+  let isCompleted: Bool
+  let completionDate: Date?
+  let priority: ReminderPriority
+  let dueDate: Date?
+  let listID: String
+  let listName: String
+
+  init(reminder: ReminderItem) {
+    id = reminder.id
+    title = reminder.title
+    titleWithoutTags = reminder.titleWithoutTags
+    tags = reminder.tags
+    notes = reminder.notes
+    isCompleted = reminder.isCompleted
+    completionDate = reminder.completionDate
+    priority = reminder.priority
+    dueDate = reminder.dueDate
+    listID = reminder.listID
+    listName = reminder.listName
+  }
+}
+
 enum OutputRenderer {
   static func printReminders(_ reminders: [ReminderItem], format: OutputFormat) {
     switch format {
@@ -28,7 +61,7 @@ enum OutputRenderer {
     case .plain:
       printRemindersPlain(reminders)
     case .json:
-      printJSON(reminders)
+      printJSON(reminders.map(ReminderOutput.init))
     case .quiet:
       Swift.print(reminders.count)
     }
@@ -51,13 +84,34 @@ enum OutputRenderer {
     switch format {
     case .standard:
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
-      Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)")
+      Swift.print("✓ \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)")
     case .plain:
       Swift.print(plainLine(for: reminder))
     case .json:
-      printJSON(reminder)
+      printJSON(ReminderOutput(reminder: reminder))
     case .quiet:
       break
+    }
+  }
+
+  static func printTagSummaries(_ summaries: [TagSummary], format: OutputFormat) {
+    switch format {
+    case .standard:
+      guard !summaries.isEmpty else {
+        Swift.print("No tags found")
+        return
+      }
+      for summary in summaries.sorted(by: { $0.tag.localizedCaseInsensitiveCompare($1.tag) == .orderedAscending }) {
+        Swift.print("#\(summary.tag)\t\(summary.count)")
+      }
+    case .plain:
+      for summary in summaries.sorted(by: { $0.tag.localizedCaseInsensitiveCompare($1.tag) == .orderedAscending }) {
+        Swift.print("\(summary.tag)\t\(summary.count)")
+      }
+    case .json:
+      printJSON(summaries)
+    case .quiet:
+      Swift.print(summaries.count)
     }
   }
 
@@ -98,7 +152,7 @@ enum OutputRenderer {
       let status = reminder.isCompleted ? "x" : " "
       let due = reminder.dueDate.map { DateParsing.formatDisplay($0) } ?? "no due date"
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
-      Swift.print("[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)")
+      Swift.print("[\(index + 1)] [\(status)] \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(priority)")
     }
   }
 
@@ -119,6 +173,17 @@ enum OutputRenderer {
       due,
       reminder.title,
     ].joined(separator: "\t")
+  }
+
+  private static func displayTitle(for reminder: ReminderItem) -> String {
+    let tags = reminder.tags.map { "#\($0)" }.joined(separator: " ")
+    if tags.isEmpty {
+      return reminder.titleWithoutTags
+    }
+    if reminder.titleWithoutTags.isEmpty {
+      return tags
+    }
+    return "\(reminder.titleWithoutTags) \(tags)"
   }
 
   private static func printListsStandard(_ summaries: [ListSummary]) {
