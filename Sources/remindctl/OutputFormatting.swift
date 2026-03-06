@@ -20,6 +20,53 @@ struct AuthorizationSummary: Codable, Sendable, Equatable {
   let authorized: Bool
 }
 
+struct TagSummary: Codable, Sendable, Equatable {
+  let tag: String
+  let count: Int
+}
+
+struct ReminderOutput: Codable, Sendable, Equatable {
+  let id: String
+  let title: String
+  let titleWithoutTags: String
+  let tags: [String]
+  let notes: String?
+  let url: URL?
+  let isCompleted: Bool
+  let completionDate: Date?
+  let creationDate: Date?
+  let lastModifiedDate: Date?
+  let priority: ReminderPriority
+  let dueDate: Date?
+  let dueDateIsAllDay: Bool
+  let alarmDate: Date?
+  let recurrenceRule: RecurrenceRule?
+  let locationTrigger: LocationTrigger?
+  let listID: String
+  let listName: String
+
+  init(reminder: ReminderItem) {
+    id = reminder.id
+    title = reminder.title
+    titleWithoutTags = reminder.titleWithoutTags
+    tags = reminder.tags
+    notes = reminder.notes
+    url = reminder.url
+    isCompleted = reminder.isCompleted
+    completionDate = reminder.completionDate
+    creationDate = reminder.creationDate
+    lastModifiedDate = reminder.lastModifiedDate
+    priority = reminder.priority
+    dueDate = reminder.dueDate
+    dueDateIsAllDay = reminder.dueDateIsAllDay
+    alarmDate = reminder.alarmDate
+    recurrenceRule = reminder.recurrenceRule
+    locationTrigger = reminder.locationTrigger
+    listID = reminder.listID
+    listName = reminder.listName
+  }
+}
+
 enum OutputRenderer {
   static func printReminders(_ reminders: [ReminderItem], format: OutputFormat) {
     switch format {
@@ -28,7 +75,7 @@ enum OutputRenderer {
     case .plain:
       printRemindersPlain(reminders)
     case .json:
-      printJSON(reminders)
+      printJSON(reminders.map(ReminderOutput.init))
     case .quiet:
       Swift.print(reminders.count)
     }
@@ -55,13 +102,34 @@ enum OutputRenderer {
           DateParsing.formatDisplay($0, isDateOnly: reminder.dueDateIsAllDay)
         } ?? "no due date"
       let recurrence = recurrenceSuffix(for: reminder)
-      Swift.print("✓ \(reminder.title) [\(reminder.listName)] — \(due)\(recurrence)")
+      Swift.print("✓ \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(recurrence)")
     case .plain:
       Swift.print(plainLine(for: reminder))
     case .json:
-      printJSON(reminder)
+      printJSON(ReminderOutput(reminder: reminder))
     case .quiet:
       break
+    }
+  }
+
+  static func printTagSummaries(_ summaries: [TagSummary], format: OutputFormat) {
+    switch format {
+    case .standard:
+      guard !summaries.isEmpty else {
+        Swift.print("No tags found")
+        return
+      }
+      for summary in summaries.sorted(by: { $0.tag.localizedCaseInsensitiveCompare($1.tag) == .orderedAscending }) {
+        Swift.print("#\(summary.tag)\t\(summary.count)")
+      }
+    case .plain:
+      for summary in summaries.sorted(by: { $0.tag.localizedCaseInsensitiveCompare($1.tag) == .orderedAscending }) {
+        Swift.print("\(summary.tag)\t\(summary.count)")
+      }
+    case .json:
+      printJSON(summaries)
+    case .quiet:
+      Swift.print(summaries.count)
     }
   }
 
@@ -107,7 +175,7 @@ enum OutputRenderer {
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
       let recurrence = recurrenceSuffix(for: reminder)
       Swift.print(
-        "[\(index + 1)] [\(status)] \(reminder.title) [\(reminder.listName)] — \(due)\(priority)\(recurrence)")
+        "[\(index + 1)] [\(status)] \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(priority)\(recurrence)")
     }
   }
 
@@ -136,6 +204,17 @@ enum OutputRenderer {
       due,
       reminder.title,
     ].joined(separator: "\t")
+  }
+
+  private static func displayTitle(for reminder: ReminderItem) -> String {
+    let tags = reminder.tags.map { "#\($0)" }.joined(separator: " ")
+    if tags.isEmpty {
+      return reminder.titleWithoutTags
+    }
+    if reminder.titleWithoutTags.isEmpty {
+      return tags
+    }
+    return "\(reminder.titleWithoutTags) \(tags)"
   }
 
   private static func printListsStandard(_ summaries: [ListSummary]) {

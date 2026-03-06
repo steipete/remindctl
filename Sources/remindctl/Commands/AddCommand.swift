@@ -38,6 +38,12 @@ enum AddCommand {
               parsing: .singleValue
             ),
             .make(
+              label: "tag",
+              names: [.long("tag")],
+              help: "Tag name (repeatable or comma-separated)",
+              parsing: .singleValue
+            ),
+            .make(
               label: "priority",
               names: [.short("p"), .long("priority")],
               help: "none|low|medium|high",
@@ -56,6 +62,8 @@ enum AddCommand {
         "remindctl add \"Check mailbox\" --location \"1 Apple Park Way, Cupertino, CA\"",
         "remindctl add \"Take vitamins\" --due tomorrow --repeat daily",
         "remindctl add \"Review docs\" --priority high",
+        "remindctl add \"Buy milk\" --tag shopping --tag urgent",
+        "remindctl add \"Buy milk\" --tag shopping,urgent",
       ]
     ) { values, runtime in
       let titleOption = values.option("title")
@@ -85,6 +93,7 @@ enum AddCommand {
       let radiusValue = values.option("radius")
       let repeatValue = values.option("repeat")
       let priorityValue = values.option("priority")
+      let tagValues = values.optionValues("tag")
 
       let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
       let alarmDate = try alarmValue.map(CommandHelpers.parseDueDate)
@@ -95,6 +104,10 @@ enum AddCommand {
       )
       let recurrenceRule = try repeatValue.map(CommandHelpers.parseRecurrence)
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
+      let tags = try CommandHelpers.parseTags(tagValues)
+      let parsedTitle = CommandHelpers.parseTitleTags(title)
+      let mergedTags = CommandHelpers.mergeTags(existing: parsedTitle.tags, add: tags, remove: [], clear: false)
+      let titleWithTags = CommandHelpers.composeTitle(baseTitle: parsedTitle.baseTitle, tags: mergedTags)
 
       let store = RemindersStore()
       try await store.requestAccess()
@@ -110,7 +123,7 @@ enum AddCommand {
       }
 
       let draft = ReminderDraft(
-        title: title,
+        title: titleWithTags,
         notes: notes,
         dueDate: dueDate,
         alarmDate: alarmDate,
