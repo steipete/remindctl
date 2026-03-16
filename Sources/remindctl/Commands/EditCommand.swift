@@ -17,6 +17,7 @@ enum EditCommand {
             .make(label: "title", names: [.short("t"), .long("title")], help: "New title", parsing: .singleValue),
             .make(label: "list", names: [.short("l"), .long("list")], help: "Move to list", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Set due date", parsing: .singleValue),
+            .make(label: "alarm", names: [.short("a"), .long("alarm")], help: "Set alarm date (use 'none' to clear)", parsing: .singleValue),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Set notes", parsing: .singleValue),
             .make(
               label: "priority",
@@ -27,6 +28,7 @@ enum EditCommand {
           ],
           flags: [
             .make(label: "clearDue", names: [.long("clear-due")], help: "Clear due date"),
+            .make(label: "clearAlarm", names: [.long("clear-alarm")], help: "Clear alarm"),
             .make(label: "complete", names: [.long("complete")], help: "Mark completed"),
             .make(label: "incomplete", names: [.long("incomplete")], help: "Mark incomplete"),
           ]
@@ -66,6 +68,17 @@ enum EditCommand {
         dueUpdate = .some(nil)
       }
 
+      var alarmUpdate: Date??
+      if let alarmValue = values.option("alarm") {
+        alarmUpdate = try CommandHelpers.parseDueDate(alarmValue)
+      }
+      if values.flag("clearAlarm") {
+        if alarmUpdate != nil {
+          throw RemindCoreError.operationFailed("Use either --alarm or --clear-alarm, not both")
+        }
+        alarmUpdate = .some(nil)
+      }
+
       var priority: ReminderPriority?
       if let priorityValue = values.option("priority") {
         priority = try CommandHelpers.parsePriority(priorityValue)
@@ -78,7 +91,7 @@ enum EditCommand {
       }
       let isCompleted: Bool? = completeFlag ? true : (incompleteFlag ? false : nil)
 
-      if title == nil && listName == nil && notes == nil && dueUpdate == nil && priority == nil && isCompleted == nil {
+      if title == nil && listName == nil && notes == nil && dueUpdate == nil && alarmUpdate == nil && priority == nil && isCompleted == nil {
         throw RemindCoreError.operationFailed("No changes specified")
       }
 
@@ -86,6 +99,7 @@ enum EditCommand {
         title: title,
         notes: notes,
         dueDate: dueUpdate,
+        alarmDate: alarmUpdate,
         priority: priority,
         listName: listName,
         isCompleted: isCompleted

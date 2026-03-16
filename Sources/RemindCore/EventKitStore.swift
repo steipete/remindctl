@@ -103,6 +103,12 @@ public actor RemindersStore {
     if let dueDate = draft.dueDate {
       reminder.dueDateComponents = calendarComponents(from: dueDate)
     }
+    // Add alarm: use alarmDate if set, otherwise default to dueDate
+    if let alarmDate = draft.alarmDate {
+      reminder.addAlarm(EKAlarm(absoluteDate: alarmDate))
+    } else if let dueDate = draft.dueDate {
+      reminder.addAlarm(EKAlarm(absoluteDate: dueDate))
+    }
     try eventStore.save(reminder, commit: true)
     return ReminderItem(
       id: reminder.calendarItemIdentifier,
@@ -135,6 +141,17 @@ public actor RemindersStore {
     }
     if let priority = update.priority {
       reminder.priority = priority.eventKitValue
+    }
+    // Update alarm
+    if let alarmDate = update.alarmDate {
+      if let existingAlarms = reminder.alarms {
+        for alarm in existingAlarms {
+          reminder.removeAlarm(alarm)
+        }
+      }
+      if let date = alarmDate {
+        reminder.addAlarm(EKAlarm(absoluteDate: date))
+      }
     }
     if let listName = update.listName {
       reminder.calendar = try calendar(named: listName)

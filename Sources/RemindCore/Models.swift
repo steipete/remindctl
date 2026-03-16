@@ -81,12 +81,14 @@ public struct ReminderDraft: Sendable {
   public let title: String
   public let notes: String?
   public let dueDate: Date?
+  public let alarmDate: Date?
   public let priority: ReminderPriority
 
-  public init(title: String, notes: String?, dueDate: Date?, priority: ReminderPriority) {
+  public init(title: String, notes: String?, dueDate: Date?, alarmDate: Date? = nil, priority: ReminderPriority) {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
+    self.alarmDate = alarmDate
     self.priority = priority
   }
 }
@@ -95,6 +97,7 @@ public struct ReminderUpdate: Sendable {
   public let title: String?
   public let notes: String?
   public let dueDate: Date??
+  public let alarmDate: Date??
   public let priority: ReminderPriority?
   public let listName: String?
   public let isCompleted: Bool?
@@ -103,6 +106,7 @@ public struct ReminderUpdate: Sendable {
     title: String? = nil,
     notes: String? = nil,
     dueDate: Date?? = nil,
+    alarmDate: Date?? = nil,
     priority: ReminderPriority? = nil,
     listName: String? = nil,
     isCompleted: Bool? = nil
@@ -110,6 +114,7 @@ public struct ReminderUpdate: Sendable {
     self.title = title
     self.notes = notes
     self.dueDate = dueDate
+    self.alarmDate = alarmDate
     self.priority = priority
     self.listName = listName
     self.isCompleted = isCompleted
