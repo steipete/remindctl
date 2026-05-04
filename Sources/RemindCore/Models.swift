@@ -74,6 +74,33 @@ public struct ReminderList: Identifiable, Codable, Sendable, Equatable {
   }
 }
 
+public enum LocationProximity: String, Codable, CaseIterable, Sendable {
+  case arriving
+  case leaving
+}
+
+public struct LocationTrigger: Codable, Sendable, Equatable {
+  public let address: String
+  public let latitude: Double?
+  public let longitude: Double?
+  public let radius: Double
+  public let proximity: LocationProximity
+
+  public init(
+    address: String,
+    latitude: Double? = nil,
+    longitude: Double? = nil,
+    radius: Double = 100,
+    proximity: LocationProximity = .arriving
+  ) {
+    self.address = address
+    self.latitude = latitude
+    self.longitude = longitude
+    self.radius = radius
+    self.proximity = proximity
+  }
+}
+
 public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let id: String
   public let title: String
@@ -88,6 +115,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
   public let dueDateIsAllDay: Bool
   public let alarmDate: Date?
   public let recurrenceRule: RecurrenceRule?
+  public let locationTrigger: LocationTrigger?
   public let listID: String
   public let listName: String
 
@@ -105,6 +133,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     dueDateIsAllDay: Bool = false,
     alarmDate: Date? = nil,
     recurrenceRule: RecurrenceRule? = nil,
+    locationTrigger: LocationTrigger? = nil,
     listID: String,
     listName: String
   ) {
@@ -121,6 +150,7 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.dueDateIsAllDay = dueDateIsAllDay
     self.alarmDate = alarmDate
     self.recurrenceRule = recurrenceRule
+    self.locationTrigger = locationTrigger
     self.listID = listID
     self.listName = listName
   }
@@ -132,6 +162,7 @@ public struct ReminderDraft: Sendable {
   public let dueDate: ParsedUserDate?
   public let alarmDate: ParsedUserDate?
   public let recurrenceRule: RecurrenceRule?
+  public let locationTrigger: LocationTrigger?
   public let priority: ReminderPriority
 
   public init(
@@ -140,6 +171,7 @@ public struct ReminderDraft: Sendable {
     dueDate: ParsedUserDate?,
     alarmDate: ParsedUserDate? = nil,
     recurrenceRule: RecurrenceRule? = nil,
+    locationTrigger: LocationTrigger? = nil,
     priority: ReminderPriority
   ) {
     self.title = title
@@ -147,6 +179,7 @@ public struct ReminderDraft: Sendable {
     self.dueDate = dueDate
     self.alarmDate = alarmDate
     self.recurrenceRule = recurrenceRule
+    self.locationTrigger = locationTrigger
     self.priority = priority
   }
 }

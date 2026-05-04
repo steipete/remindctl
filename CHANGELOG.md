@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.0 - 2026-05-04
+- Add location-based reminder triggers via `--location`, `--leaving`, and `--radius`
 - Add simple recurrence support via `--repeat` and `--no-repeat`
 - Add EventKit alarm support via `--alarm` and `--clear-alarm`
 - Add reminder `url` to JSON output when EventKit exposes one

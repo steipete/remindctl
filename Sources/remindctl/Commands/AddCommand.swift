@@ -18,6 +18,18 @@ enum AddCommand {
             .make(label: "list", names: [.short("l"), .long("list")], help: "List name", parsing: .singleValue),
             .make(label: "due", names: [.short("d"), .long("due")], help: "Due date", parsing: .singleValue),
             .make(label: "alarm", names: [.short("a"), .long("alarm")], help: "Alarm date", parsing: .singleValue),
+            .make(
+              label: "location",
+              names: [.long("location")],
+              help: "Location address for geofence trigger",
+              parsing: .singleValue
+            ),
+            .make(
+              label: "radius",
+              names: [.long("radius")],
+              help: "Geofence radius in meters (default: 100)",
+              parsing: .singleValue
+            ),
             .make(label: "notes", names: [.short("n"), .long("notes")], help: "Notes", parsing: .singleValue),
             .make(
               label: "repeat",
@@ -31,6 +43,9 @@ enum AddCommand {
               help: "none|low|medium|high",
               parsing: .singleValue
             ),
+          ],
+          flags: [
+            .make(label: "leaving", names: [.long("leaving")], help: "Trigger when leaving location")
           ]
         )
       ),
@@ -38,6 +53,7 @@ enum AddCommand {
         "remindctl add \"Buy milk\"",
         "remindctl add --title \"Call mom\" --list Personal --due tomorrow",
         "remindctl add \"Call mom\" --due \"2026-01-03 09:00\" --alarm \"2026-01-03 08:55\"",
+        "remindctl add \"Check mailbox\" --location \"1 Apple Park Way, Cupertino, CA\"",
         "remindctl add \"Take vitamins\" --due tomorrow --repeat daily",
         "remindctl add \"Review docs\" --priority high",
       ]
@@ -65,11 +81,18 @@ enum AddCommand {
       let notes = values.option("notes")
       let dueValue = values.option("due")
       let alarmValue = values.option("alarm")
+      let locationValue = values.option("location")
+      let radiusValue = values.option("radius")
       let repeatValue = values.option("repeat")
       let priorityValue = values.option("priority")
 
       let dueDate = try dueValue.map(CommandHelpers.parseDueDate)
       let alarmDate = try alarmValue.map(CommandHelpers.parseDueDate)
+      let locationTrigger = try makeLocationTrigger(
+        location: locationValue,
+        radius: radiusValue,
+        leaving: values.flag("leaving")
+      )
       let recurrenceRule = try repeatValue.map(CommandHelpers.parseRecurrence)
       let priority = try priorityValue.map(CommandHelpers.parsePriority) ?? .none
 
@@ -92,10 +115,38 @@ enum AddCommand {
         dueDate: dueDate,
         alarmDate: alarmDate,
         recurrenceRule: recurrenceRule,
+        locationTrigger: locationTrigger,
         priority: priority
       )
       let reminder = try await store.createReminder(draft, listName: targetList)
       OutputRenderer.printReminder(reminder, format: runtime.outputFormat)
     }
+  }
+
+  private static func makeLocationTrigger(
+    location: String?,
+    radius: String?,
+    leaving: Bool
+  ) throws -> LocationTrigger? {
+    if location == nil {
+      if radius != nil || leaving {
+        throw RemindCoreError.operationFailed("Use --location with --radius or --leaving")
+      }
+      return nil
+    }
+    guard let location else { return nil }
+    let radius = try radius.map(parseRadius) ?? 100
+    return LocationTrigger(
+      address: location,
+      radius: radius,
+      proximity: leaving ? .leaving : .arriving
+    )
+  }
+
+  private static func parseRadius(_ value: String) throws -> Double {
+    guard let radius = Double(value), radius > 0 else {
+      throw RemindCoreError.operationFailed("Invalid radius: \"\(value)\"")
+    }
+    return radius
   }
 }

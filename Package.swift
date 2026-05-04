@@ -16,6 +16,7 @@ let package = Package(
       name: "RemindCore",
       dependencies: [],
       linkerSettings: [
+        .linkedFramework("CoreLocation"),
         .linkedFramework("EventKit"),
       ]
     ),

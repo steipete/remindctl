@@ -20,6 +20,13 @@ struct ReminderItemCodingTests {
       dueDate: nil,
       alarmDate: Date(timeIntervalSince1970: 1_700_000_300),
       recurrenceRule: RecurrenceRule(frequency: .weekly, interval: 2),
+      locationTrigger: LocationTrigger(
+        address: "1 Apple Park Way",
+        latitude: 37.3349,
+        longitude: -122.0090,
+        radius: 100,
+        proximity: .arriving
+      ),
       listID: "list",
       listName: "Inbox"
     )
@@ -33,5 +40,6 @@ struct ReminderItemCodingTests {
     #expect(json.contains(#""url":"https:\/\/example.com""#))
     #expect(json.contains(#""alarmDate""#))
     #expect(json.contains(#""recurrenceRule""#))
+    #expect(json.contains(#""locationTrigger""#))
   }
 }

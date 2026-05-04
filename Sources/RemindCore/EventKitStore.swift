@@ -1,3 +1,4 @@
+import CoreLocation
 import EventKit
 import Foundation
 
@@ -116,6 +117,9 @@ public actor RemindersStore {
     if let recurrenceRule = draft.recurrenceRule {
       replaceRecurrence(on: reminder, with: recurrenceRule)
     }
+    if let locationTrigger = draft.locationTrigger {
+      reminder.addAlarm(try await locationAlarm(from: locationTrigger))
+    }
     try eventStore.save(reminder, commit: true)
     return item(from: reminder)
   }
@@ -211,6 +215,7 @@ extension RemindersStore {
       let dueDateIsAllDay: Bool
       let alarmDate: Date?
       let recurrenceRule: RecurrenceRule?
+      let locationTrigger: LocationTrigger?
       let listID: String
       let listName: String
     }
@@ -234,6 +239,7 @@ extension RemindersStore {
             dueDateIsAllDay: isAllDay(components),
             alarmDate: Self.alarmDate(from: reminder),
             recurrenceRule: Self.recurrenceRule(from: reminder),
+            locationTrigger: Self.locationTrigger(from: reminder),
             listID: reminder.calendar.calendarIdentifier,
             listName: reminder.calendar.title
           )
@@ -257,6 +263,7 @@ extension RemindersStore {
         dueDateIsAllDay: data.dueDateIsAllDay,
         alarmDate: data.alarmDate,
         recurrenceRule: data.recurrenceRule,
+        locationTrigger: data.locationTrigger,
         listID: data.listID,
         listName: data.listName
       )
@@ -310,6 +317,7 @@ extension RemindersStore {
       dueDateIsAllDay: isAllDay(components),
       alarmDate: Self.alarmDate(from: reminder),
       recurrenceRule: Self.recurrenceRule(from: reminder),
+      locationTrigger: Self.locationTrigger(from: reminder),
       listID: reminder.calendar.calendarIdentifier,
       listName: reminder.calendar.title
     )
@@ -343,6 +351,44 @@ extension RemindersStore {
     guard let rule = reminder.recurrenceRules?.first else { return nil }
     guard let frequency = RecurrenceFrequency(eventKitFrequency: rule.frequency) else { return nil }
     return RecurrenceRule(frequency: frequency, interval: rule.interval)
+  }
+
+  private func locationAlarm(from trigger: LocationTrigger) async throws -> EKAlarm {
+    let structuredLocation = EKStructuredLocation(title: trigger.address)
+    let location: CLLocation
+    if let latitude = trigger.latitude, let longitude = trigger.longitude {
+      location = CLLocation(latitude: latitude, longitude: longitude)
+    } else {
+      let placemarks = try await CLGeocoder().geocodeAddressString(trigger.address)
+      guard let geocodedLocation = placemarks.first?.location else {
+        throw RemindCoreError.operationFailed("Could not geocode location: \(trigger.address)")
+      }
+      location = geocodedLocation
+    }
+
+    structuredLocation.geoLocation = location
+    structuredLocation.radius = trigger.radius
+
+    let alarm = EKAlarm()
+    alarm.structuredLocation = structuredLocation
+    alarm.proximity = trigger.proximity == .arriving ? .enter : .leave
+    return alarm
+  }
+
+  private static func locationTrigger(from reminder: EKReminder) -> LocationTrigger? {
+    guard let alarm = reminder.alarms?.first(where: { $0.structuredLocation != nil }),
+      let structuredLocation = alarm.structuredLocation,
+      let proximity = LocationProximity(eventKitProximity: alarm.proximity)
+    else { return nil }
+
+    let coordinate = structuredLocation.geoLocation?.coordinate
+    return LocationTrigger(
+      address: structuredLocation.title ?? "",
+      latitude: coordinate?.latitude,
+      longitude: coordinate?.longitude,
+      radius: structuredLocation.radius,
+      proximity: proximity
+    )
   }
 }
 
@@ -379,5 +425,18 @@ extension RecurrenceFrequency {
 extension RecurrenceRule {
   fileprivate var eventKitFrequency: EKRecurrenceFrequency {
     frequency.eventKitFrequency
+  }
+}
+
+extension LocationProximity {
+  fileprivate init?(eventKitProximity: EKAlarmProximity) {
+    switch eventKitProximity {
+    case .enter:
+      self = .arriving
+    case .leave:
+      self = .leaving
+    default:
+      return nil
+    }
   }
 }
