@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Add a release helper for Homebrew tap updates; thanks @dinakars777.
+
 ## 0.2.0 - 2026-05-04
 - Add location-based reminder triggers via `--location`, `--leaving`, and `--radius`
 - Add simple recurrence support via `--repeat` and `--no-repeat`
