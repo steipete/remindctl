@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.0 - 2026-05-04
+- Accept local ISO 8601 due dates without a timezone suffix
+- Preserve date-only due inputs as all-day reminders instead of midnight reminders
+- Allow `list` to show reminders from multiple list names in one command
+
 ## 0.1.1 - 2026-01-11
 - Fix Swift 6 strict concurrency crash when fetching reminders
 

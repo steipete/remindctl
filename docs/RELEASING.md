@@ -5,8 +5,8 @@
 
 ## Steps
 1. Update changelog and version
-   - Ensure `CHANGELOG.md` has `## 0.1.0 - YYYY-MM-DD` with final notes.
-   - Update `version.env` to `0.1.0` (already set for the first release).
+   - Ensure `CHANGELOG.md` has `## 0.2.0 - YYYY-MM-DD` with final notes.
+   - Update `version.env` to `0.2.0`.
    - Run `scripts/generate-version.sh` (refreshes `Sources/remindctl/Version.swift` + embedded Info.plist).
 2. Ensure checks are green
    - `make check`
@@ -14,11 +14,11 @@
    - Requires `APP_STORE_CONNECT_API_KEY_P8`, `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`.
    - `scripts/sign-and-notarize.sh` (outputs `/tmp/remindctl-macos.zip` by default).
 4. Tag, push, and publish
-   - `git tag -a v0.1.0 -m "v0.1.0"`
-   - `git push origin v0.1.0`
+   - `git tag -a v0.2.0 -m "v0.2.0"`
+   - `git push origin v0.2.0`
    - Extract release notes:
      ```sh
-     version=0.1.0
+     version=0.2.0
      notes_file=/tmp/release-notes.txt
      awk -v v="$version" '
        $0 ~ ("^## " v "($|[[:space:]]-)") { in_section=1; next }
@@ -28,7 +28,7 @@
      ```
    - Create GitHub release:
      ```sh
-     gh release create v0.1.0 /tmp/remindctl-macos.zip -t "v0.1.0" -F /tmp/release-notes.txt
+     gh release create v0.2.0 /tmp/remindctl-macos.zip -t "v0.2.0" -F /tmp/release-notes.txt
      ```
 5. Homebrew tap
    - Update `../homebrew-tap/Formula/remindctl.rb` to point at the GitHub release asset.
