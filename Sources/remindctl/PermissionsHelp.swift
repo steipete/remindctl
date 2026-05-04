@@ -2,6 +2,7 @@ import RemindCore
 
 enum PermissionsHelp {
   static let settingsPath = "System Settings > Privacy & Security > Reminders"
+  static let promptWorkaround = #"osascript -e 'tell application "Reminders" to get name of reminders'"#
 
   static func guidanceLines(for status: RemindersAuthorizationStatus) -> [String] {
     switch status {
@@ -15,6 +16,7 @@ enum PermissionsHelp {
     case .denied, .restricted:
       return [
         "Grant access in \(settingsPath) for Terminal (or remindctl).",
+        "If no prompt appears, run `\(promptWorkaround)` once from the same terminal app.",
         "If running over SSH, grant access on the Mac that runs the command.",
       ]
     case .writeOnly:

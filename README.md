@@ -76,3 +76,10 @@ Date-only due inputs create all-day reminders; date-time inputs create timed rem
 Run `remindctl authorize` to trigger the system prompt. If access is denied, enable
 Terminal (or remindctl) in System Settings → Privacy & Security → Reminders.
 If running over SSH, grant access on the Mac that runs the command.
+If no prompt appears in your terminal app, run:
+
+```bash
+osascript -e 'tell application "Reminders" to get name of reminders'
+```
+
+Then allow access and rerun `remindctl status`.

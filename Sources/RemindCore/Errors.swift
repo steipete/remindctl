@@ -18,6 +18,8 @@ public enum RemindCoreError: LocalizedError, Sendable, Equatable {
         "Reminders access denied.",
         "Run `remindctl authorize` to trigger the prompt, then allow Terminal (or remindctl)",
         "in System Settings > Privacy & Security > Reminders.",
+        "If no prompt appears, run `osascript -e 'tell application \"Reminders\" to get name of reminders'`",
+        "once from the same terminal app.",
         "If running over SSH, grant access on the Mac that runs the command.",
       ].joined(separator: " ")
     case .writeOnlyAccess:
