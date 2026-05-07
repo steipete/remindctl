@@ -175,7 +175,8 @@ enum OutputRenderer {
       let priority = reminder.priority == .none ? "" : " priority=\(reminder.priority.rawValue)"
       let recurrence = recurrenceSuffix(for: reminder)
       Swift.print(
-        "[\(index + 1)] [\(status)] \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(priority)\(recurrence)")
+        "[\(index + 1)] [\(status)] \(displayTitle(for: reminder)) [\(reminder.listName)] — \(due)\(priority)\(recurrence)"
+      )
     }
   }
 

@@ -108,7 +108,8 @@ enum CommandHelpers {
       let range = title.range(of: pattern, options: .regularExpression)
     {
       let match = String(title[range])
-      let tag = match
+      let tag =
+        match
         .trimmingCharacters(in: .whitespacesAndNewlines)
         .dropFirst()
       extracted.append(String(tag))
