@@ -12,6 +12,7 @@ struct CommandRouter {
     self.version = CommandRouter.resolveVersion()
     self.specs = [
       ShowCommand.spec,
+      TagsCommand.spec,
       ListCommand.spec,
       AddCommand.spec,
       EditCommand.spec,

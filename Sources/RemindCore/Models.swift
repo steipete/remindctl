@@ -154,6 +154,39 @@ public struct ReminderItem: Identifiable, Codable, Sendable, Equatable {
     self.listID = listID
     self.listName = listName
   }
+
+  public var tags: [String] {
+    Self.extractTrailingTags(from: title).tags
+  }
+
+  public var titleWithoutTags: String {
+    Self.extractTrailingTags(from: title).title
+  }
+
+  private static let trailingTagPattern = try! NSRegularExpression(
+    pattern: "(?:^|\\s)#([A-Za-z0-9][A-Za-z0-9_-]*)$"
+  )
+
+  private static func extractTrailingTags(from rawTitle: String) -> (title: String, tags: [String]) {
+    var title = rawTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+    var extracted: [String] = []
+
+    while !title.isEmpty {
+      let range = NSRange(title.startIndex..<title.endIndex, in: title)
+      guard let match = trailingTagPattern.firstMatch(in: title, options: [], range: range),
+        let fullRange = Range(match.range(at: 0), in: title),
+        let tagRange = Range(match.range(at: 1), in: title)
+      else {
+        break
+      }
+
+      extracted.append(String(title[tagRange]))
+      title.removeSubrange(fullRange)
+      title = title.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    return (title: title, tags: extracted.reversed())
+  }
 }
 
 public struct ReminderDraft: Sendable {
