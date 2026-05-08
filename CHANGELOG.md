@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Resolve numeric edit/complete/delete indexes against the default `show` view instead of unrelated completed reminders.
 - Add a release helper for Homebrew tap updates; thanks @dinakars777.
 
 ## 0.2.0 - 2026-05-04

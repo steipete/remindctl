@@ -5,18 +5,20 @@ public enum IDResolver {
 
   public static func resolve(
     _ inputs: [String],
-    from reminders: [ReminderItem]
+    from reminders: [ReminderItem],
+    numericFrom numericReminders: [ReminderItem]? = nil
   ) throws -> [ReminderItem] {
     let sorted = ReminderFiltering.sort(reminders)
+    let numericSorted = ReminderFiltering.sort(numericReminders ?? reminders)
     var resolved: [ReminderItem] = []
     for input in inputs {
       let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
       if let index = Int(trimmed) {
         let idx = index - 1
-        guard idx >= 0 && idx < sorted.count else {
+        guard idx >= 0 && idx < numericSorted.count else {
           throw RemindCoreError.invalidIdentifier(trimmed)
         }
-        resolved.append(sorted[idx])
+        resolved.append(numericSorted[idx])
         continue
       }
 

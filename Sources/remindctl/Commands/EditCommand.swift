@@ -57,7 +57,7 @@ enum EditCommand {
       let store = RemindersStore()
       try await store.requestAccess()
       let reminders = try await store.reminders(in: nil)
-      let resolved = try IDResolver.resolve([input], from: reminders)
+      let resolved = try CommandHelpers.resolveShowIdentifiers([input], from: reminders)
       guard let reminder = resolved.first else {
         throw RemindCoreError.reminderNotFound(input)
       }

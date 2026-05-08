@@ -42,6 +42,11 @@ enum CommandHelpers {
     }
   }
 
+  static func resolveShowIdentifiers(_ inputs: [String], from reminders: [ReminderItem]) throws -> [ReminderItem] {
+    let defaultShowReminders = ReminderFiltering.apply(reminders, filter: .today)
+    return try IDResolver.resolve(inputs, from: reminders, numericFrom: defaultShowReminders)
+  }
+
   private static func parseCustomRecurrence(_ normalized: String, original: String) throws -> RecurrenceRule {
     let parts = normalized.split(separator: " ")
     guard parts.count == 3, parts[0] == "every", let interval = Int(parts[1]), interval > 0 else {

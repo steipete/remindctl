@@ -38,6 +38,13 @@ struct IDResolverTests {
     #expect(resolved.first?.title == "First")
   }
 
+  @Test("Resolve numeric indexes from filtered show output")
+  func resolveIndexFromFilteredShowOutput() throws {
+    let all = sampleReminders()
+    let resolved = try IDResolver.resolve(["1"], from: all, numericFrom: [all[1]])
+    #expect(resolved.first?.title == "Second")
+  }
+
   @Test("Resolve by prefix")
   func resolvePrefix() throws {
     let resolved = try IDResolver.resolve(["abcd"], from: sampleReminders())
